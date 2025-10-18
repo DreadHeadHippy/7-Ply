@@ -14,6 +14,8 @@ A **premium Discord bot** for skateboarding communities! Features a comprehensiv
 - `/trick` — Get random skateboard tricks with control images
 - `/skatefact` — Learn fascinating skateboarding history and facts
 - `/brand` — Explore skateboard brand history from legends to modern day
+- `/skater` — Learn about legendary skaters and their contributions
+- `/crew` — Discover iconic skate crews that shaped the culture
 - **Themed Interactions**: All commands feature authentic skateboarding culture
 
 ### 👥 **Community Features**
@@ -101,6 +103,8 @@ Configures your ranking system:
 - `/trick` - Perform a random skateboard trick with style
 - `/skatefact` - Learn fascinating skateboarding history and facts
 - `/brand` - Explore skateboard brand history from legends to modern day
+- `/skater` - Learn about legendary skaters and their contributions
+- `/crew` - Discover iconic skate crews that shaped the culture
 
 ### **🆘 Help & Information**
 - `/help` - Show all available commands based on your permissions

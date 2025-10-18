@@ -258,6 +258,326 @@ SKATE_BRANDS = [
     }
 ]
 
+# Legendary skaters database - from pioneers to modern icons
+LEGENDARY_SKATERS = [
+    {
+        "name": "Tony Hawk",
+        "nickname": "The Birdman",
+        "born": "May 12, 1968",
+        "stance": "Goofy",
+        "style": "Vert",
+        "active": "1982-Present",
+        "achievements": "First to land 900, 12x X-Games gold, video game franchise",
+        "signature_trick": "900 (Two and a half aerial spins)",
+        "fun_fact": "Landed the first documented 900 at X-Games 1999 at age 31, retiring on top.",
+        "legacy": "Brought skateboarding to mainstream America and inspired millions to start skating."
+    },
+    {
+        "name": "Rodney Mullen", 
+        "nickname": "The Godfather of Street Skating",
+        "born": "August 17, 1966",
+        "stance": "Regular",
+        "style": "Street/Technical",
+        "active": "1980-Present",
+        "achievements": "Invented the flatground ollie, kickflip, heelflip, 360 flip",
+        "signature_trick": "Casper Slide and Rail Stand",
+        "fun_fact": "Won 34 out of 35 freestyle contests before switching to street skating.",
+        "legacy": "Literally invented most of the tricks that define modern street skateboarding."
+    },
+    {
+        "name": "Stacy Peralta",
+        "nickname": "The Z-Boy Director",
+        "born": "October 15, 1957", 
+        "stance": "Regular",
+        "style": "Pool/Vert",
+        "active": "1970s-1980s (skating), 1980s-Present (directing)",
+        "achievements": "Z-Boys member, Powell Peralta founder, Dogtown documentary director",
+        "signature_trick": "Pool carving and vertical surfing style",
+        "fun_fact": "Transitioned from legendary skater to award-winning filmmaker with Dogtown & Z-Boys.",
+        "legacy": "Helped create modern skateboarding and then documented its history for the world."
+    },
+    {
+        "name": "Christian Hosoi",
+        "nickname": "Christ",
+        "born": "October 5, 1967",
+        "stance": "Regular", 
+        "style": "Vert/Pool",
+        "active": "1980s-Present",
+        "achievements": "Vert legend, Hammerhead board shape creator, born-again comeback story",
+        "signature_trick": "Christ Air (one-handed invert with cross pose)",
+        "fun_fact": "His rivalry with Tony Hawk defined 1980s vert skateboarding.",
+        "legacy": "Pure style and spiritual journey from 80s excess to redemption and comeback."
+    },
+    {
+        "name": "Natas Kaupas",
+        "nickname": "Natas",
+        "born": "March 23, 1969",
+        "stance": "Regular",
+        "style": "Street Pioneer", 
+        "active": "1980s-1990s",
+        "achievements": "Street skating pioneer, spinning on fire hydrants, iconic Santa Monica Airlines graphics",
+        "signature_trick": "Hydrant spins and wall rides",
+        "fun_fact": "His name is 'Satan' spelled backwards, which fit his rebellious skating perfectly.",
+        "legacy": "Showed that street obstacles could be skated in ways no one had imagined."
+    },
+    {
+        "name": "Mark Gonzales",
+        "nickname": "Gonz / The Gonz",
+        "born": "June 1, 1968",
+        "stance": "Regular",
+        "style": "Street Creative",
+        "active": "1980s-Present",
+        "achievements": "Street skating pioneer, artist, poet, and creative innovator",
+        "signature_trick": "Creative approach to every obstacle",
+        "fun_fact": "He's also a respected contemporary artist whose work sells in galleries worldwide.",
+        "legacy": "Proved skateboarding is pure creative expression, not just athletic achievement."
+    },
+    {
+        "name": "Daewon Song",
+        "nickname": "Daewon",
+        "born": "February 17, 1975",
+        "stance": "Regular",
+        "style": "Technical Street",
+        "active": "1990s-Present", 
+        "achievements": "Technical innovation, World Industries and Almost Skateboards legend",
+        "signature_trick": "Primo slides and technical ledge combinations",
+        "fun_fact": "His video parts always feature the most creative and technical tricks imaginable.",
+        "legacy": "Constantly pushes the boundaries of what's technically possible on a skateboard."
+    },
+    {
+        "name": "Steve Caballero",
+        "nickname": "Cab",
+        "born": "November 8, 1964", 
+        "stance": "Regular",
+        "style": "Vert/Pool",
+        "active": "1970s-Present",
+        "achievements": "Bones Brigade member, Caballerial inventor, longest pro career",
+        "signature_trick": "Caballerial (fakie 360)",
+        "fun_fact": "Still skating professionally at 60+ years old, longer than most pros' entire lives.",
+        "legacy": "Proof that skateboarding is a lifelong passion, not just a young person's game."
+    },
+    {
+        "name": "Eric Koston",
+        "nickname": "Koston",
+        "born": "April 29, 1975",
+        "stance": "Regular",
+        "style": "Street Technical",
+        "active": "1990s-Present",
+        "achievements": "Girl/Crailtap legend, Nike SB signature shoe, consistent video part excellence",
+        "signature_trick": "Switch frontside flips and ledge mastery",
+        "fun_fact": "His Nike SB Koston signature shoes helped legitimize skateboarding in mainstream footwear.",
+        "legacy": "Defined consistent excellence and style over multiple decades of street skating."
+    },
+    {
+        "name": "Andrew Reynolds",
+        "nickname": "The Boss",
+        "born": "June 6, 1978",
+        "stance": "Regular",
+        "style": "Gnarly Street",
+        "active": "1990s-Present",
+        "achievements": "Baker Skateboards founder, Emerica signature shoe, street skating icon",
+        "signature_trick": "Kickflip backtails and handrail destruction",
+        "fun_fact": "His Baker video parts redefined what 'gnarly' meant in street skateboarding.",
+        "legacy": "Showed that East Coast aggression could dominate the traditionally California scene."
+    },
+    {
+        "name": "Danny Way",
+        "nickname": "Danny Way",
+        "born": "April 15, 1974",
+        "stance": "Regular", 
+        "style": "Big Air/Mega Ramp",
+        "active": "1990s-Present",
+        "achievements": "Plan B legend, Great Wall of China jump, mega ramp pioneer",
+        "signature_trick": "Mega ramp innovations and massive air",
+        "fun_fact": "Jumped the Great Wall of China on a skateboard without any motor assistance.",
+        "legacy": "Pushed skateboarding into extreme sports territory with death-defying mega ramp riding."
+    },
+    {
+        "name": "Geoff Rowley",
+        "nickname": "Rowley",
+        "born": "June 6, 1976",
+        "stance": "Regular",
+        "style": "Gnarly Street",
+        "active": "1990s-Present", 
+        "achievements": "Flip Skateboards legend, Sorry video parts, British invasion",
+        "signature_trick": "Frontside flips down massive stair sets",
+        "fun_fact": "His 'Sorry' video part is still considered one of the heaviest street parts ever filmed.",
+        "legacy": "Brought British aggression to American street skating and raised the danger bar."
+    },
+    {
+        "name": "Mike Carroll",
+        "nickname": "Carroll",
+        "born": "August 2, 1975",
+        "stance": "Regular",
+        "style": "Street Style",
+        "active": "1990s-Present",
+        "achievements": "Plan B and Girl Skateboards co-founder, Questionable video legend",
+        "signature_trick": "Style over everything approach",
+        "fun_fact": "Co-founded Girl Skateboards to focus on style and creativity over pure gnarliness.",
+        "legacy": "Proved that skateboarding style and creativity matter as much as raw technical ability."
+    },
+    {
+        "name": "Chris Cole",
+        "nickname": "Cole",
+        "born": "March 10, 1982",
+        "stance": "Regular",
+        "style": "Street Power",
+        "active": "2000s-Present",
+        "achievements": "Zero/Plan B legend, Thrasher SOTY 2005, consistent video excellence",
+        "signature_trick": "Switch flip and technical stair set mastery",
+        "fun_fact": "His video parts consistently feature the most technical tricks down the biggest obstacles.",
+        "legacy": "Represents the modern era of technical street skating pushed to its absolute limits."
+    },
+    {
+        "name": "Nyjah Huston",
+        "nickname": "Nyjah",
+        "born": "November 30, 1994",
+        "stance": "Regular",
+        "style": "Contest Technical", 
+        "active": "2000s-Present",
+        "achievements": "Most X-Games medals in skateboarding history, Olympic competitor",
+        "signature_trick": "Technical ledge combinations and contest consistency",
+        "fun_fact": "Started skating professionally at age 7 and has dominated contests ever since.",
+        "legacy": "Defines the modern contest skateboarding era and Olympic-level technical precision."
+    }
+]
+
+# Legendary skate crews database - from pioneering groups to modern collectives
+SKATE_CREWS = [
+    {
+        "name": "Z-Boys (Zephyr Team)",
+        "formed": "1975",
+        "location": "Venice Beach, California",
+        "era": "1970s Pool Revolution",
+        "members": "Stacy Peralta, Tony Alva, Jay Adams, Peggy Oki, Nathan Pratt, Jim Muir",
+        "style": "Aggressive pool riding with surfing influence",
+        "impact": "Revolutionized skateboarding by bringing surfing style to empty pools",
+        "fun_fact": "They literally invented modern skateboarding by treating pools like waves.",
+        "legacy": "Transformed skateboarding from sidewalk surfing into the aggressive sport we know today."
+    },
+    {
+        "name": "Bones Brigade",
+        "formed": "1979", 
+        "location": "Santa Barbara, California",
+        "era": "1980s Vert Domination",
+        "members": "Tony Hawk, Steve Caballero, Rodney Mullen, Lance Mountain, Mike McGill, Tommy Guerrero",
+        "style": "Vert mastery and technical innovation",
+        "impact": "Dominated 1980s skateboarding and pioneered skate videos",
+        "fun_fact": "Their video series literally taught the world how skateboarding worked.",
+        "legacy": "Created the template for professional skateboard teams and video marketing."
+    },
+    {
+        "name": "H-Street Crew", 
+        "formed": "1987",
+        "location": "San Diego, California", 
+        "era": "Late 80s Street Transition",
+        "members": "Matt Hensley, Danny Way, Ron Allen, Brian Lotti, Sal Barbier",
+        "style": "Street skating innovation and handrail pioneers",
+        "impact": "Helped transition skateboarding from vert to street focus",
+        "fun_fact": "They were among the first to make handrails a primary street skating obstacle.", 
+        "legacy": "Bridged the gap between 80s vert and 90s street skateboarding dominance."
+    },
+    {
+        "name": "Plan B Original Team",
+        "formed": "1991",
+        "location": "San Diego, California",
+        "era": "Early 90s Technical Revolution", 
+        "members": "Danny Way, Colin McKay, Pat Duffy, Sean Sheffey, Mike Carroll, Rick Howard, Mike Ternasky",
+        "style": "Technical street innovation",
+        "impact": "The 'Questionable' video redefined what was possible in street skating",
+        "fun_fact": "Their 'Questionable' video literally questioned every assumption about skateboarding.",
+        "legacy": "Set the standard for technical street skateboarding that still influences skating today."
+    },
+    {
+        "name": "EMB Crew (Embarcadero)",
+        "formed": "Late 1980s",
+        "location": "San Francisco, California",
+        "era": "Late 80s/Early 90s Street Scene",
+        "members": "Henry Sanchez, Jovontae Turner, Karl Watson, Gabriel Rodriguez, Mike York",
+        "style": "Raw street skating at the famous EMB plaza",
+        "impact": "Created the street plaza skating culture", 
+        "fun_fact": "The Embarcadero plaza became skateboarding's most famous street spot.",
+        "legacy": "Proved that public spaces could become skateboarding meccas and cultural centers."
+    },
+    {
+        "name": "Love Park Crew",
+        "formed": "1990s",
+        "location": "Philadelphia, Pennsylvania",
+        "era": "90s East Coast Street",
+        "members": "Ricky Oyola, Brian Wenning, Fred Gall, Anthony Pappalardo, Rob Welsh",
+        "style": "East Coast street aggression and unique spot usage",
+        "impact": "Put East Coast street skating on the map",
+        "fun_fact": "Love Park became as legendary as any California skate spot despite constant security.",
+        "legacy": "Showed that skateboarding excellence could emerge from anywhere, not just California."
+    },
+    {
+        "name": "Baker Boys",
+        "formed": "2000",
+        "location": "Los Angeles, California", 
+        "era": "2000s Raw Street",
+        "members": "Andrew Reynolds, Jim Greco, Erik Ellington, Dustin Dollin, Bryan Herman",
+        "style": "Raw, unpolished street skating with East Coast influence",
+        "impact": "Brought underground, grimy aesthetic to mainstream skateboarding",
+        "fun_fact": "Their 'bootleg' video style influenced countless filmers and brands.",
+        "legacy": "Proved that skateboarding didn't need to be polished or pretty to be powerful."
+    },
+    {
+        "name": "Flip Team (Sorry Era)",
+        "formed": "Early 2000s",
+        "location": "Huntington Beach, California",
+        "era": "2000s Technical Progression", 
+        "members": "Geoff Rowley, Tom Penny, Alex Moul, Bastien Salabanzi, Arto Saari",
+        "style": "Technical innovation with European influence",
+        "impact": "The 'Sorry' video pushed technical street skating to new levels",
+        "fun_fact": "Combined European technical skating with American spot selection perfectly.",
+        "legacy": "Influenced a generation of technical street skaters worldwide."
+    },
+    {
+        "name": "Crailtap Family", 
+        "formed": "1993",
+        "location": "Los Angeles, California",
+        "era": "90s-2000s Style Focus",
+        "members": "Rick Howard, Mike Carroll, Eric Koston, Alex Olson, Mike York, Jesus Fernandez",
+        "style": "Style over everything, creative approach",
+        "impact": "Girl/Chocolate created the 'style matters' movement",
+        "fun_fact": "Their graphics and videos prioritized art and creativity over pure performance.",
+        "legacy": "Showed that skateboarding could be both athletic and artistic at the highest level."
+    },
+    {
+        "name": "Supreme Crew",
+        "formed": "1994",
+        "location": "New York City, New York",
+        "era": "90s-2000s NYC Street",
+        "members": "Harold Hunter, Jefferson Pang, Ryan Hickey, Giovanni Estevez, Anthony Van Engelen",
+        "style": "NYC street culture meets skateboarding",
+        "impact": "Bridged skateboarding with street fashion and hip-hop culture",
+        "fun_fact": "What started as a skate shop became a billion-dollar fashion empire.",
+        "legacy": "Proved skateboarding culture could influence mainstream fashion and lifestyle globally."
+    },
+    {
+        "name": "Alien Workshop Flow",
+        "formed": "1990",
+        "location": "Dayton, Ohio",
+        "era": "90s-2000s Midwest Representation", 
+        "members": "Rob Welsh, Bo Turner, John Cardiel, Anthony Van Engelen, Heath Kirchart",
+        "style": "Artistic graphics with aggressive Midwest skating", 
+        "impact": "Represented skateboarding outside of California scenes",
+        "fun_fact": "Their board graphics were so artistic they're collected by museums.",
+        "legacy": "Showed that innovation and creativity could come from anywhere in America."
+    },
+    {
+        "name": "Berrics Crew",
+        "formed": "2007",
+        "location": "Los Angeles, California",
+        "era": "2000s-2010s Internet Era",
+        "members": "Steve Berra, Eric Koston, P-Rod, Chico Brenes, Alex Chalmers",
+        "style": "Internet-era skateboarding and viral content",
+        "impact": "Pioneered skateboarding's transition to internet/social media",
+        "fun_fact": "The Berrics warehouse became skateboarding's first internet-famous indoor spot.",
+        "legacy": "Defined how skateboarding would adapt to the internet and social media age."
+    }
+]
+
 class SkateboardCommands(commands.Cog):
     """Skateboarding-related commands"""
     
@@ -825,6 +1145,127 @@ class SkateboardCommands(commands.Cog):
             )
         
         embed.set_footer(text="Respect the brands that built the culture! 🙏")
+        
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name='skater', description='Learn about legendary skaters and their contributions to the culture')
+    async def skater(self, interaction: discord.Interaction):
+        """Get detailed information about legendary skateboarders throughout history"""
+        # Award points for using the command
+        await self.award_trick_points(interaction.user.id)
+        
+        skater_data = random.choice(LEGENDARY_SKATERS)
+        
+        embed = discord.Embed(
+            title=f"🛹 {skater_data['name']}",
+            description=f"**\"{skater_data['nickname']}\"**\n{skater_data['legacy']}",
+            color=0x00ff00
+        )
+        
+        # Basic info
+        embed.add_field(
+            name="📅 Born",
+            value=skater_data['born'],
+            inline=True
+        )
+        
+        embed.add_field(
+            name="🦶 Stance", 
+            value=skater_data['stance'],
+            inline=True
+        )
+        
+        embed.add_field(
+            name="🎯 Style",
+            value=skater_data['style'],
+            inline=True
+        )
+        
+        # Career info
+        embed.add_field(
+            name="⏰ Active Years",
+            value=skater_data['active'],
+            inline=True
+        )
+        
+        embed.add_field(
+            name="🏆 Signature Trick",
+            value=skater_data['signature_trick'],
+            inline=True
+        )
+        
+        embed.add_field(
+            name="🎖️ Major Achievements", 
+            value=skater_data['achievements'],
+            inline=False
+        )
+        
+        # Fun fact
+        embed.add_field(
+            name="💡 Fun Fact",
+            value=skater_data['fun_fact'],
+            inline=False
+        )
+        
+        embed.set_footer(text="Legends never die, they inspire the next generation! 🙏")
+        
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name='crew', description='Learn about legendary skate crews that shaped the culture')
+    async def crew(self, interaction: discord.Interaction):
+        """Get detailed information about legendary skateboard crews and teams throughout history"""
+        # Award points for using the command
+        await self.award_trick_points(interaction.user.id)
+        
+        crew_data = random.choice(SKATE_CREWS)
+        
+        embed = discord.Embed(
+            title=f"👥 {crew_data['name']}",
+            description=f"**{crew_data['era']}**\n{crew_data['legacy']}",
+            color=0x00ff00
+        )
+        
+        # Basic info
+        embed.add_field(
+            name="📅 Formed",
+            value=crew_data['formed'],
+            inline=True
+        )
+        
+        embed.add_field(
+            name="🌍 Location",
+            value=crew_data['location'],
+            inline=True
+        )
+        
+        embed.add_field(
+            name="🎨 Style",
+            value=crew_data['style'],
+            inline=True
+        )
+        
+        # Members
+        embed.add_field(
+            name="⭐ Key Members",
+            value=crew_data['members'],
+            inline=False
+        )
+        
+        # Impact
+        embed.add_field(
+            name="🌟 Cultural Impact",
+            value=crew_data['impact'],
+            inline=False
+        )
+        
+        # Fun fact
+        embed.add_field(
+            name="💡 Fun Fact",
+            value=crew_data['fun_fact'],
+            inline=False
+        )
+        
+        embed.set_footer(text="Crews built the culture, one session at a time! 🤝")
         
         await interaction.response.send_message(embed=embed)
 
