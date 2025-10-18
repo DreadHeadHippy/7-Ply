@@ -1,20 +1,19 @@
-# 7-Ply Setup Guide
+# 7-Ply Server Setup Guide
 
-## 🚀 Quick Start (Plug & Play)
+## 🚀 Adding 7-Ply to Your Server
 
-**7-Ply** is now **100% plug-and-play** for any Discord server! No more hardcoded channel IDs or server-specific configuration.
+**7-Ply** is a hosted Discord bot service - no installation required!
 
-### Initial Setup
+### Getting Started
 
-1. **Invite the Bot**: Make sure 7-Ply has these permissions:
-   - Send Messages
-   - Manage Channels
-   - Manage Roles
-   - Use Slash Commands
-   - View Channels
-   - Read Message History
+1. **Invite the Bot**: [Invite Link Coming Soon]
+   
+   Required permissions:
+   - Send Messages & Use Slash Commands
+   - Manage Channels & Manage Roles
+   - View Channels & Read Message History
 
-2. **Run Setup**: Use the `/setup` command in any channel:
+2. **Configure Your Server**: Use `/setup` in any channel:
    ```
    /setup
    ```
