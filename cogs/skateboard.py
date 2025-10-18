@@ -605,10 +605,27 @@ class SkateboardCommands(commands.Cog):
     async def trick(self, interaction: discord.Interaction):
         """Get a random skateboarding trick to practice with Flick It control images for both stances"""
         
-        # Award points for using the command
-        await self.award_trick_points(interaction.user.id)
-        
-        trick = random.choice(SKATE_TRICKS)
+        try:
+            # Award points for using the command
+            await self.award_trick_points(interaction.user.id)
+            
+            # Validate trick list exists and has content
+            if not SKATE_TRICKS:
+                await interaction.response.send_message(
+                    "❌ Trick database is empty! Contact an admin.",
+                    ephemeral=True
+                )
+                return
+            
+            trick = random.choice(SKATE_TRICKS)
+            
+            # Validate trick selection
+            if not trick or not isinstance(trick, str):
+                await interaction.response.send_message(
+                    "❌ Invalid trick data! Contact an admin.",
+                    ephemeral=True
+                )
+                return
         
         embed = discord.Embed(
             title="🛹 Random Trick Challenge!",
@@ -641,9 +658,7 @@ class SkateboardCommands(commands.Cog):
         clean_trick = "".join(c for c in trick if c.isalnum() or c in (' ', '-')).rstrip()
         clean_trick = clean_trick.replace(' ', '_').lower()
         
-        # Debug: Add this temporarily to see what's happening
-        print(f"DEBUG: Trick='{trick}', Clean='{clean_trick}'")
-        print(f"DEBUG: Current working directory: {os.getcwd()}")
+
         
         # Check for both PNG and JPG formats
         image_extensions = ['.png', '.jpg', '.jpeg']
@@ -658,16 +673,13 @@ class SkateboardCommands(commands.Cog):
         bottom_image = None
         image_type = ""
         
+        # Try to find control images - fail silently if images missing
         try:
-            print(f"DEBUG: Starting image detection for '{clean_trick}'")
-            
             # Special tricks that have single images in the main tricks folder
             single_image_tricks = ['manual', 'no comply', 'nose manual', 'rail stand']
             is_single_image = any(single_trick in trick.lower() for single_trick in single_image_tricks)
-            print(f"DEBUG: is_single_image = {is_single_image}")
             
             if is_single_image:
-                print(f"DEBUG: Processing single image trick")
                 # Look for single image in main tricks folder
                 for ext in image_extensions:
                     single_path = f"images/tricks/{clean_trick}{ext}"
@@ -679,70 +691,51 @@ class SkateboardCommands(commands.Cog):
                 
                 image_type = "single"
             elif is_grind_slide:
-                print(f"DEBUG: Processing grind/slide trick")
-                
                 # Clean grind name by removing common suffixes
                 grind_name = clean_trick.replace('_grind', '').replace('_slide', '')
-                print(f"DEBUG: Cleaned grind name: '{grind_name}'")
                 
                 # Look for frontside image (goes top-right like regular stance)
                 for ext in image_extensions:
                     fs_path = f"images/tricks/grinds/fs_{grind_name}{ext}"
-                    print(f"DEBUG: Checking frontside path: {fs_path}")
-                    print(f"DEBUG: File exists: {os.path.exists(fs_path)}")
                     if os.path.exists(fs_path):
                         fs_filename = f"fs_{grind_name}{ext}"
                         top_right_image = discord.File(fs_path, filename=fs_filename)
                         files.append(top_right_image)
-                        print(f"DEBUG: Found frontside image: {fs_path}")
                         break
                 
                 # Look for backside image (goes bottom like goofy stance)
                 for ext in image_extensions:
                     bs_path = f"images/tricks/grinds/bs_{grind_name}{ext}"
-                    print(f"DEBUG: Checking backside path: {bs_path}")
-                    print(f"DEBUG: File exists: {os.path.exists(bs_path)}")
                     if os.path.exists(bs_path):
                         bs_filename = f"bs_{grind_name}{ext}"
                         bottom_image = discord.File(bs_path, filename=bs_filename)
                         files.append(bottom_image)
-                        print(f"DEBUG: Found backside image: {bs_path}")
                         break
                 
                 image_type = "grind"
             else:
-                print(f"DEBUG: Processing regular/goofy stance trick")
                 # Look for regular stance image (goes top-right)
                 for ext in image_extensions:
                     regular_path = f"images/tricks/regular/{clean_trick}{ext}"
-                    print(f"DEBUG: Checking regular path: {regular_path}")
-                    print(f"DEBUG: File exists: {os.path.exists(regular_path)}")
                     if os.path.exists(regular_path):
                         regular_filename = f"{clean_trick}_regular{ext}"
                         top_right_image = discord.File(regular_path, filename=regular_filename)
                         files.append(top_right_image)
-                        print(f"DEBUG: Found regular image: {regular_path}")
                         break
                 
                 # Look for goofy stance image (goes bottom)
                 for ext in image_extensions:
                     goofy_path = f"images/tricks/goofy/{clean_trick}{ext}"
-                    print(f"DEBUG: Checking goofy path: {goofy_path}")
-                    print(f"DEBUG: File exists: {os.path.exists(goofy_path)}")
                     if os.path.exists(goofy_path):
                         goofy_filename = f"{clean_trick}_goofy{ext}"
                         bottom_image = discord.File(goofy_path, filename=goofy_filename)
                         files.append(bottom_image)
-                        print(f"DEBUG: Found goofy image: {goofy_path}")
                         break
                 
                 image_type = "stance"
         
-        except Exception as e:
-            print(f"DEBUG: Exception during image detection: {e}")
-            print(f"DEBUG: Exception type: {type(e).__name__}")
-            import traceback
-            print(f"DEBUG: Traceback: {traceback.format_exc()}")
+        except Exception:
+            # Fail silently - no images is okay, just show the trick
             files = []
             top_right_image = None
             bottom_image = None
@@ -814,6 +807,16 @@ class SkateboardCommands(commands.Cog):
             await interaction.response.send_message(embed=embed, files=files)
         else:
             await interaction.response.send_message(embed=embed)
+                
+        except Exception as e:
+            # Log error but send user-friendly message
+            print(f"Error in trick command: {e}")
+            
+            # Fallback response
+            await interaction.response.send_message(
+                "❌ Something went wrong getting your trick! Try again in a moment.",
+                ephemeral=True
+            )
 
     @app_commands.command(name='tricklist', description='Show all available skateboarding tricks')
     async def tricklist(self, interaction: discord.Interaction):
@@ -936,19 +939,43 @@ class SkateboardCommands(commands.Cog):
     @app_commands.command(name='skatefact', description='Learn a random skateboarding fact!')
     async def skatefact(self, interaction: discord.Interaction):
         """Get a random skateboarding fact"""
-        # Award points for using the command
-        await self.award_trick_points(interaction.user.id)
+        try:
+            # Award points for using the command
+            await self.award_trick_points(interaction.user.id)
+            
+            # Validate facts list exists
+            if not SKATE_FACTS:
+                await interaction.response.send_message(
+                    "❌ Facts database is empty! Contact an admin.",
+                    ephemeral=True
+                )
+                return
+            
+            fact = random.choice(SKATE_FACTS)
+            
+            # Validate fact selection
+            if not fact or not isinstance(fact, str):
+                await interaction.response.send_message(
+                    "❌ Invalid fact data! Contact an admin.",
+                    ephemeral=True
+                )
+                return
+            
+            embed = discord.Embed(
+                title="🛹 Skate Fact",
+                description=fact,
+                color=0x00ff00
+            )
+            embed.set_footer(text="The more you know! 🧠✨")
+            
+            await interaction.response.send_message(embed=embed)
         
-        fact = random.choice(SKATE_FACTS)
-        
-        embed = discord.Embed(
-            title="🛹 Skate Fact",
-            description=fact,
-            color=0x00ff00
-        )
-        embed.set_footer(text="The more you know! 🧠✨")
-        
-        await interaction.response.send_message(embed=embed)
+        except Exception as e:
+            print(f"Error in skatefact command: {e}")
+            await interaction.response.send_message(
+                "❌ Something went wrong getting your fact! Try again in a moment.",
+                ephemeral=True
+            )
 
     @app_commands.command(name='skatehistory', description='Learn about skateboarding history')
     async def skatehistory(self, interaction: discord.Interaction):

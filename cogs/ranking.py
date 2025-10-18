@@ -12,13 +12,14 @@ import datetime
 from typing import Dict, Any
 import pytz
 from utils.security import SecurityValidator, SecureError
+from utils.secure_files import get_secure_ranking_handler
 
 class RankingSystem(commands.Cog):
     """User ranking and progression system"""
     
     def __init__(self, bot):
         self.bot = bot
-        self.data_file = "data/user_ranks.json"
+        self.secure_handler = get_secure_ranking_handler()
         self.user_data = self.load_data()
         
         # EDT timezone
@@ -83,26 +84,17 @@ class RankingSystem(commands.Cog):
         return None
 
     def load_data(self) -> Dict[str, Any]:
-        """Load user ranking data from JSON file"""
-        if not os.path.exists("data"):
-            os.makedirs("data")
-        
-        if os.path.exists(self.data_file):
-            try:
-                with open(self.data_file, 'r') as f:
-                    return json.load(f)
-            except Exception as e:
-                print(f"Error loading ranking data: {e}")
-                return {}
-        return {}
+        """Load user ranking data using secure file handler"""
+        try:
+            return self.secure_handler.safe_load()
+        except Exception as e:
+            print(f"Error loading ranking data: {e}")
+            return {}
 
     def save_data(self):
-        """Save user ranking data to JSON file"""
+        """Save user ranking data using secure file handler"""
         try:
-            if not os.path.exists("data"):
-                os.makedirs("data")
-            with open(self.data_file, 'w') as f:
-                json.dump(self.user_data, f, indent=2)
+            self.secure_handler.safe_save(self.user_data)
         except Exception as e:
             print(f"Error saving ranking data: {e}")
 
@@ -194,8 +186,18 @@ class RankingSystem(commands.Cog):
     async def rank_cmd(self, interaction: discord.Interaction, user: discord.Member | None = None):
         """Display user rank information"""
         
-        target_user = user or interaction.user
-        user_data = self.get_user_data(target_user.id)
+        try:
+            target_user = user or interaction.user
+            
+            # Validate user
+            if not isinstance(target_user, (discord.Member, discord.User)):
+                await interaction.response.send_message(
+                    "❌ Invalid user specified!",
+                    ephemeral=True
+                )
+                return
+            
+            user_data = self.get_user_data(target_user.id)
         
         current_rank = user_data["rank"]
         points = user_data["points"]
@@ -266,6 +268,13 @@ class RankingSystem(commands.Cog):
         else:
             # Used outside #rank channel or no rank channel configured - respond ephemeral
             await interaction.response.send_message(embed=embed, ephemeral=True)
+                
+        except Exception as e:
+            print(f"Error in rank command: {e}")
+            await interaction.response.send_message(
+                "❌ Something went wrong checking your rank! Try again in a moment.",
+                ephemeral=True
+            )
 
     @app_commands.command(name='leaderboard', description='View the top ranked members')
     async def leaderboard(self, interaction: discord.Interaction):
@@ -444,9 +453,11 @@ class RankingSystem(commands.Cog):
                 inline=True
             )
             
-            # Post to #rank channel
+            # Post to configured rank channel
             try:
-                rank_channel = self.bot.get_channel(1428906481767420016)
+                guild_id = interaction.guild.id if interaction.guild else None
+                rank_channel_id = self.get_rank_channel_id(guild_id) if guild_id else None
+                rank_channel = self.bot.get_channel(rank_channel_id) if rank_channel_id else None
                 if rank_channel:
                     await rank_channel.send(embed=rankup_embed)
                 else:
@@ -470,9 +481,11 @@ class RankingSystem(commands.Cog):
                 inline=True
             )
             
-            # Post to #rank channel
+            # Post to configured rank channel
             try:
-                rank_channel = self.bot.get_channel(1428906481767420016)
+                guild_id = interaction.guild.id if interaction.guild else None
+                rank_channel_id = self.get_rank_channel_id(guild_id) if guild_id else None
+                rank_channel = self.bot.get_channel(rank_channel_id) if rank_channel_id else None
                 if rank_channel:
                     await rank_channel.send(embed=rankup_embed)
                 else:
@@ -551,9 +564,11 @@ class RankingSystem(commands.Cog):
                 inline=True
             )
             
-            # Post to #rank channel
+            # Post to configured rank channel
             try:
-                rank_channel = self.bot.get_channel(1428906481767420016)
+                guild_id = message.guild.id if message.guild else None
+                rank_channel_id = self.get_rank_channel_id(guild_id) if guild_id else None
+                rank_channel = self.bot.get_channel(rank_channel_id) if rank_channel_id else None
                 if rank_channel:
                     await rank_channel.send(embed=embed)
                 else:

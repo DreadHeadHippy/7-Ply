@@ -163,6 +163,23 @@ class SuggestionHandler(commands.Cog):
         if message.content.startswith('!'):
             return
 
+        # Validate message content
+        if not message.content or len(message.content.strip()) == 0:
+            try:
+                await message.delete()
+                await message.channel.send(f"{message.author.mention}, empty messages aren't valid suggestions!", delete_after=5)
+            except:
+                pass
+            return
+            
+        if len(message.content) > 1000:
+            try:
+                await message.delete()
+                await message.channel.send(f"{message.author.mention}, suggestions must be under 1000 characters!", delete_after=10)
+            except:
+                pass
+            return
+
         try:
             author = message.author
             content = message.content
@@ -212,25 +229,38 @@ class SuggestionHandler(commands.Cog):
                 pass
 
     @commands.command(name='suggest')
-    async def suggest_command(self, ctx, *, suggestion):
+    async def suggest_command(self, ctx, *, suggestion=None):
         """Submit a suggestion using a command (alternative to posting in suggestions channel)"""
         
-        # Check if suggestions are enabled
-        if not self.is_suggestions_enabled(ctx.guild.id):
-            await ctx.send("❌ Suggestions system is not enabled on this server. Ask an admin to run `/setup` to configure it!")
-            return
-        
-        suggestions_channel_id = self.get_suggestions_channel_id(ctx.guild.id)
-        if ctx.channel.id == suggestions_channel_id:
-            await ctx.send("❌ Just post your suggestion directly in this channel! No need to use the command here.", delete_after=5)
-            return
-
-        suggestions_channel = self.bot.get_channel(suggestions_channel_id)
-        if not suggestions_channel:
-            await ctx.send("❌ Suggestions channel not found! Ask an admin to run `/setup` to configure it properly.")
-            return
-
         try:
+            # Validate guild context
+            if not ctx.guild:
+                await ctx.send("❌ This command can only be used in a server!")
+                return
+                
+            # Validate suggestion input
+            if not suggestion or len(suggestion.strip()) == 0:
+                await ctx.send("❌ Please provide a suggestion! Usage: `!suggest <your suggestion>`")
+                return
+            
+            if len(suggestion) > 1000:
+                await ctx.send("❌ Suggestion too long! Please keep it under 1000 characters.")
+                return
+            
+            # Check if suggestions are enabled
+            if not self.is_suggestions_enabled(ctx.guild.id):
+                await ctx.send("❌ Suggestions system is not enabled on this server. Ask an admin to run `/setup` to configure it!")
+                return
+            
+            suggestions_channel_id = self.get_suggestions_channel_id(ctx.guild.id)
+            if ctx.channel.id == suggestions_channel_id:
+                await ctx.send("❌ Just post your suggestion directly in this channel! No need to use the command here.", delete_after=5)
+                return
+
+            suggestions_channel = self.bot.get_channel(suggestions_channel_id)
+            if not suggestions_channel:
+                await ctx.send("❌ Suggestions channel not found! Ask an admin to run `/setup` to configure it properly.")
+                return
             author = ctx.author
 
             # Create skateboarding-themed embed

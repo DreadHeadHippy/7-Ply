@@ -9,6 +9,7 @@ import discord
 from typing import Optional
 import sys
 import os
+import time
 
 # Import security utilities
 from utils.security import SecurityValidator, SecureError
@@ -18,11 +19,33 @@ class AdminCommands(commands.Cog):
     
     def __init__(self, bot):
         self.bot = bot
+        self.command_cooldowns = {}  # Store last use times
+    
+    def check_cooldown(self, user_id: int, command_name: str, cooldown_seconds: int = 5) -> bool:
+        """Check if user is on cooldown for a command"""
+        key = f"{user_id}_{command_name}"
+        current_time = time.time()
+        
+        if key in self.command_cooldowns:
+            time_since_last = current_time - self.command_cooldowns[key]
+            if time_since_last < cooldown_seconds:
+                return False
+        
+        self.command_cooldowns[key] = current_time
+        return True
 
     @app_commands.command(name='say', description='Make the bot say something')
     @app_commands.default_permissions(manage_messages=True)
     async def say(self, interaction: discord.Interaction, channel: Optional[discord.TextChannel] = None, *, message: str):
         """Make the bot say something in a specific channel or current channel"""
+        
+        # Rate limiting (5 second cooldown)
+        if not self.check_cooldown(interaction.user.id, "say", 5):
+            await interaction.response.send_message(
+                SecureError.rate_limit_error(5),
+                ephemeral=True
+            )
+            return
         
         # Security validation
         has_permission, perm_error = SecurityValidator.validate_moderate_permissions(interaction)
@@ -71,6 +94,14 @@ class AdminCommands(commands.Cog):
     @app_commands.default_permissions(manage_messages=True)
     async def announce(self, interaction: discord.Interaction, channel: Optional[discord.TextChannel] = None, *, message: str):
         """Make a skateboard-themed announcement"""
+        
+        # Rate limiting (10 second cooldown for announces)
+        if not self.check_cooldown(interaction.user.id, "announce", 10):
+            await interaction.response.send_message(
+                SecureError.rate_limit_error(10),
+                ephemeral=True
+            )
+            return
         
         # Security validation
         has_permission, perm_error = SecurityValidator.validate_moderate_permissions(interaction)
@@ -125,6 +156,14 @@ class AdminCommands(commands.Cog):
     @app_commands.default_permissions(manage_messages=True)
     async def embed(self, interaction: discord.Interaction, channel: Optional[discord.TextChannel] = None, title: str = "", *, description: str):
         """Send a custom embed message"""
+        
+        # Rate limiting (15 second cooldown for embeds)
+        if not self.check_cooldown(interaction.user.id, "embed", 15):
+            await interaction.response.send_message(
+                SecureError.rate_limit_error(15),
+                ephemeral=True
+            )
+            return
         
         # Security validation
         has_permission, perm_error = SecurityValidator.validate_moderate_permissions(interaction)

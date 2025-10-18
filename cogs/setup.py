@@ -163,22 +163,30 @@ class SetupSystem(commands.Cog):
     @app_commands.command(name='setup_reset', description='Reset bot configuration for this server')
     @app_commands.default_permissions(administrator=True)
     async def setup_reset(self, interaction: discord.Interaction):
-        """Reset server configuration"""
+        """Reset server configuration and clear any stuck setup processes"""
         
         guild = interaction.guild
         if not guild:
             await interaction.response.send_message("❌ This command can only be used in a server!", ephemeral=True)
             return
         
-        # Reset config
+        # Check if setup was stuck
+        config = self.get_server_config(guild.id)
+        was_stuck = config.get("setup_in_progress", False)
+        
+        # Reset config (this clears everything including setup locks)
         guild_id_str = str(guild.id)
         if guild_id_str in self.server_configs:
             del self.server_configs[guild_id_str]
             self.save_configs()
         
+        description = "Server configuration has been reset. Use `/setup` to configure again."
+        if was_stuck:
+            description += "\n\n✅ **Also cleared a stuck setup process!**"
+        
         embed = discord.Embed(
             title="🔄 Configuration Reset",
-            description="Server configuration has been reset. Use `/setup` to configure again.",
+            description=description,
             color=0xff6600
         )
         
@@ -535,9 +543,26 @@ class FeatureSelectView(discord.ui.View):
     async def run_setup(self, interaction: discord.Interaction):
         """Run the actual setup process with selected features"""
         
+        # Check if setup is already in progress
+        config = self.setup_cog.get_server_config(self.guild.id)
+        if config.get("setup_in_progress", False):
+            await interaction.response.edit_message(
+                embed=discord.Embed(
+                    title="⚠️ Setup In Progress",
+                    description="Setup is already running! Please wait for it to complete or try again in a few minutes.",
+                    color=0xff6600
+                ),
+                view=None
+            )
+            return
+        
+        # Mark setup as in progress
+        config["setup_in_progress"] = True
+        self.setup_cog.save_configs()
+        
         setup_embed = discord.Embed(
             title="🔧 Running Setup...",
-            description="Setting up your server configuration...",
+            description="Setting up your server configuration...\n⚠️ **Don't close Discord until this completes!**",
             color=0xffd700
         )
         
@@ -568,6 +593,8 @@ class FeatureSelectView(discord.ui.View):
             config["features"] = self.selected_features.copy()
             config["setup_completed"] = True
             config["setup_date"] = self.setup_cog.get_edt_now().strftime("%Y-%m-%d")
+            # Remove setup in progress flag
+            config.pop("setup_in_progress", None)
             self.setup_cog.save_configs()
             
             # Step 4: Send success message
@@ -594,9 +621,14 @@ class FeatureSelectView(discord.ui.View):
             await interaction.edit_original_response(embed=success_embed)
             
         except Exception as e:
+            # Clean up setup in progress flag on error
+            config = self.setup_cog.get_server_config(self.guild.id)
+            config.pop("setup_in_progress", None)
+            self.setup_cog.save_configs()
+            
             error_embed = discord.Embed(
                 title="❌ Setup Failed",
-                description=f"An error occurred during setup: {str(e)}",
+                description=f"**Error:** {str(e)}\n\n**Common fixes:**\n• Make sure I have Administrator permissions\n• Try running `/setup` again\n• Contact support if this persists",
                 color=0xff0000
             )
             await interaction.edit_original_response(embed=error_embed)
