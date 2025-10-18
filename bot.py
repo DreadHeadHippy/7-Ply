@@ -235,10 +235,23 @@ async def cache_stats(ctx):
     
     await ctx.send(embed=embed)
 
-@bot.tree.command(name="ping", description="Test if slash commands work")
+@bot.tree.command(name="ping", description="Test bot latency and API response time")
 async def ping_test(interaction: discord.Interaction):
-    """Simple test to verify slash commands are working"""
-    await interaction.response.send_message("🛹 Pong! Slash commands are working!", ephemeral=True)
+    """Test bot latency and API response time"""
+    import time
+    
+    # Calculate bot latency (time to process command)
+    start_time = time.time()
+    await interaction.response.send_message("🛹 Calculating ping...", ephemeral=True)
+    bot_latency = round((time.time() - start_time) * 1000)
+    
+    # Get API latency (WebSocket heartbeat)
+    api_latency = round(bot.latency * 1000)
+    
+    # Update the message with results
+    await interaction.edit_original_response(
+        content=f"🛹 Pong! Bot latency: **{bot_latency}ms** | API latency: **{api_latency}ms**"
+    )
 
 async def setup_bot():
     # Load all cogs from the cogs directory
