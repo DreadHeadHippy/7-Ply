@@ -626,55 +626,46 @@ class SkateboardCommands(commands.Cog):
                     ephemeral=True
                 )
                 return
-        
-        embed = discord.Embed(
-            title="🛹 Random Trick Challenge!",
-            description=f"**{trick}**",
-            color=0x00ff00
-        )
-        
-        # Use custom tip if available, otherwise use default
-        if trick in TRICK_TIPS:
-            tip_data = TRICK_TIPS[trick]
-            embed.add_field(
-                name=tip_data["name"],
-                value=tip_data["value"],
-                inline=False
+            
+            embed = discord.Embed(
+                title="🛹 Random Trick Challenge!",
+                description=f"**{trick}**",
+                color=0x00ff00
             )
-        else:
-            embed.add_field(
-                name="💡 Tip", 
-                value="Practice makes perfect! Start with the basics and work your way up.", 
-                inline=False
-            )
-        
-        # Check for control sequence images 
-        files = []
-        top_right_image = None  # Thumbnail position
-        bottom_image = None     # Main image position
-        image_type = ""
-        
-        # Clean trick name for filename (remove spaces, special chars)
-        clean_trick = "".join(c for c in trick if c.isalnum() or c in (' ', '-')).rstrip()
-        clean_trick = clean_trick.replace(' ', '_').lower()
-        
-
-        
-        # Check for both PNG and JPG formats
-        image_extensions = ['.png', '.jpg', '.jpeg']
-        
-        # Determine trick type and find images
-        grind_slide_keywords = ['grind', 'slide', 'blunt', 'lipslide', 'boardslide', '50-50', '5-0', 'nosegrind', 'tailslide', 'crooked', 'feeble', 'smith']
-        is_grind_slide = any(keyword in trick.lower() for keyword in grind_slide_keywords)
-        
-        # Initialize variables
-        files = []
-        top_right_image = None
-        bottom_image = None
-        image_type = ""
-        
-        # Try to find control images - fail silently if images missing
-        try:
+            
+            # Use custom tip if available, otherwise use default
+            if trick in TRICK_TIPS:
+                tip_data = TRICK_TIPS[trick]
+                embed.add_field(
+                    name=tip_data["name"],
+                    value=tip_data["value"],
+                    inline=False
+                )
+            else:
+                embed.add_field(
+                    name="💡 Tip", 
+                    value="Practice makes perfect! Start with the basics and work your way up.", 
+                    inline=False
+                )
+            
+            # Check for control sequence images 
+            files = []
+            top_right_image = None  # Thumbnail position
+            bottom_image = None     # Main image position
+            image_type = ""
+            
+            # Clean trick name for filename (remove spaces, special chars)
+            clean_trick = "".join(c for c in trick if c.isalnum() or c in (' ', '-')).rstrip()
+            clean_trick = clean_trick.replace(' ', '_').lower()
+            
+            # Check for both PNG and JPG formats
+            image_extensions = ['.png', '.jpg', '.jpeg']
+            
+            # Determine trick type and find images
+            grind_slide_keywords = ['grind', 'slide', 'blunt', 'lipslide', 'boardslide', '50-50', '5-0', 'nosegrind', 'tailslide', 'crooked', 'feeble', 'smith']
+            is_grind_slide = any(keyword in trick.lower() for keyword in grind_slide_keywords)
+            
+            # Try to find control images - fail silently if images missing
             # Special tricks that have single images in the main tricks folder
             single_image_tricks = ['manual', 'no comply', 'nose manual', 'rail stand']
             is_single_image = any(single_trick in trick.lower() for single_trick in single_image_tricks)
@@ -733,80 +724,73 @@ class SkateboardCommands(commands.Cog):
                         break
                 
                 image_type = "stance"
-        
-        except Exception:
-            # Fail silently - no images is okay, just show the trick
-            files = []
-            top_right_image = None
-            bottom_image = None
-            image_type = ""
-        
-        # Set images in embed (top-right image as thumbnail, bottom image as main)
-        if top_right_image:
-            embed.set_thumbnail(url=f"attachment://{top_right_image.filename}")
-        
-        if bottom_image:
-            embed.set_image(url=f"attachment://{bottom_image.filename}")
-        
-        # Update the control info based on what images we have and trick type
-        if top_right_image and bottom_image:
-            if image_type == "grind":
-                embed.add_field(
-                    name="🎮 Flick It Controls",
-                    value="**Frontside** - Thumbnail (top-right)\n**Backside** - Main image (below)",
-                    inline=False
-                )
+            
+            # Set images in embed (top-right image as thumbnail, bottom image as main)
+            if top_right_image:
+                embed.set_thumbnail(url=f"attachment://{top_right_image.filename}")
+            
+            if bottom_image:
+                embed.set_image(url=f"attachment://{bottom_image.filename}")
+            
+            # Update the control info based on what images we have and trick type
+            if top_right_image and bottom_image:
+                if image_type == "grind":
+                    embed.add_field(
+                        name="🎮 Flick It Controls",
+                        value="**Frontside** - Thumbnail (top-right)\n**Backside** - Main image (below)",
+                        inline=False
+                    )
+                else:
+                    embed.add_field(
+                        name="🎮 Flick It Controls",
+                        value="**Regular Stance** - Thumbnail (top-right)\n**Goofy Stance** - Main image (below)",
+                        inline=False
+                    )
+            elif top_right_image:
+                if image_type == "grind":
+                    embed.add_field(
+                        name="🎮 Flick It Controls", 
+                        value="**Frontside** - See thumbnail (top-right)\n*(Backside image coming soon)*",
+                        inline=False
+                    )
+                else:
+                    embed.add_field(
+                        name="🎮 Flick It Controls", 
+                        value="**Regular Stance** - See thumbnail (top-right)\n*(Goofy stance image coming soon)*",
+                        inline=False
+                    )
+            elif bottom_image:
+                if image_type == "grind":
+                    embed.add_field(
+                        name="🎮 Flick It Controls",
+                        value="**Backside** - See main image (below)\n*(Frontside image coming soon)*", 
+                        inline=False
+                    )
+                elif image_type == "single":
+                    embed.add_field(
+                        name="🎮 Flick It Controls",
+                        value="**Control sequence** - See image below", 
+                        inline=False
+                    )
+                else:
+                    embed.add_field(
+                        name="🎮 Flick It Controls",
+                        value="**Goofy Stance** - See main image (below)\n*(Regular stance image coming soon)*", 
+                        inline=False
+                    )
             else:
                 embed.add_field(
                     name="🎮 Flick It Controls",
-                    value="**Regular Stance** - Thumbnail (top-right)\n**Goofy Stance** - Main image (below)",
+                    value="Control sequence images coming soon! 📸\nUpload screenshots to show the control sequences.",
                     inline=False
                 )
-        elif top_right_image:
-            if image_type == "grind":
-                embed.add_field(
-                    name="🎮 Flick It Controls", 
-                    value="**Frontside** - See thumbnail (top-right)\n*(Backside image coming soon)*",
-                    inline=False
-                )
+            
+            embed.set_footer(text="Keep shredding! 🤙")
+            
+            if files:
+                await interaction.response.send_message(embed=embed, files=files)
             else:
-                embed.add_field(
-                    name="🎮 Flick It Controls", 
-                    value="**Regular Stance** - See thumbnail (top-right)\n*(Goofy stance image coming soon)*",
-                    inline=False
-                )
-        elif bottom_image:
-            if image_type == "grind":
-                embed.add_field(
-                    name="🎮 Flick It Controls",
-                    value="**Backside** - See main image (below)\n*(Frontside image coming soon)*", 
-                    inline=False
-                )
-            elif image_type == "single":
-                embed.add_field(
-                    name="🎮 Flick It Controls",
-                    value="**Control sequence** - See image below", 
-                    inline=False
-                )
-            else:
-                embed.add_field(
-                    name="🎮 Flick It Controls",
-                    value="**Goofy Stance** - See main image (below)\n*(Regular stance image coming soon)*", 
-                    inline=False
-                )
-        else:
-            embed.add_field(
-                name="🎮 Flick It Controls",
-                value="Control sequence images coming soon! 📸\nUpload screenshots to show the control sequences.",
-                inline=False
-            )
-        
-        embed.set_footer(text="Keep shredding! 🤙")
-        
-        if files:
-            await interaction.response.send_message(embed=embed, files=files)
-        else:
-            await interaction.response.send_message(embed=embed)
+                await interaction.response.send_message(embed=embed)
                 
         except Exception as e:
             # Log error but send user-friendly message

@@ -198,76 +198,76 @@ class RankingSystem(commands.Cog):
                 return
             
             user_data = self.get_user_data(target_user.id)
+            
+            current_rank = user_data["rank"]
+            points = user_data["points"]
+            rank_info = self.get_rank_info(current_rank)
+            next_rank_info, next_rank_points = self.get_next_rank_info(current_rank)
         
-        current_rank = user_data["rank"]
-        points = user_data["points"]
-        rank_info = self.get_rank_info(current_rank)
-        next_rank_info, next_rank_points = self.get_next_rank_info(current_rank)
+            # Calculate progress to next rank
+            if current_rank < 15:
+                current_rank_points = self.rank_data[current_rank]["points"]
+                points_needed = next_rank_points - points
+                progress_points = points - current_rank_points
+                total_points_needed = next_rank_points - current_rank_points
+                progress_percentage = (progress_points / total_points_needed) * 100 if total_points_needed > 0 else 100
+            else:
+                points_needed = 0
+                progress_percentage = 100
         
-        # Calculate progress to next rank
-        if current_rank < 15:
-            current_rank_points = self.rank_data[current_rank]["points"]
-            points_needed = next_rank_points - points
-            progress_points = points - current_rank_points
-            total_points_needed = next_rank_points - current_rank_points
-            progress_percentage = (progress_points / total_points_needed) * 100 if total_points_needed > 0 else 100
-        else:
-            points_needed = 0
-            progress_percentage = 100
-        
-        # Create progress bar
-        bar_length = 20
-        filled_length = int(bar_length * progress_percentage / 100)
-        bar = "█" * filled_length + "░" * (bar_length - filled_length)
-        
-        embed = discord.Embed(
-            title=f"{rank_info['emoji']} {target_user.display_name}'s Rank",
-            color=0x00ff88
-        )
-        
-        embed.add_field(
-            name="🏆 Current Rank",
-            value=f"**{rank_info['name']}** ({current_rank}/15)",
-            inline=True
-        )
-        
-        embed.add_field(
-            name="💯 Total Points",
-            value=f"**{points:,}** points",
-            inline=True
-        )
-        
-        if current_rank < 15:
-            embed.add_field(
-                name="📈 Next Rank",
-                value=f"{next_rank_info['emoji']} {next_rank_info['name']}",
-                inline=False
+            # Create progress bar
+            bar_length = 20
+            filled_length = int(bar_length * progress_percentage / 100)
+            bar = "█" * filled_length + "░" * (bar_length - filled_length)
+            
+            embed = discord.Embed(
+                title=f"{rank_info['emoji']} {target_user.display_name}'s Rank",
+                color=0x00ff88
             )
             
             embed.add_field(
-                name="🎯 Progress",
-                value=f"`{bar}` {progress_percentage:.1f}%\n**{points_needed:,}** points needed",
-                inline=False
+                name="🏆 Current Rank",
+                value=f"**{rank_info['name']}** ({current_rank}/15)",
+                inline=True
             )
-        else:
+            
             embed.add_field(
-                name="🎉 Maximum Rank Achieved!",
-                value="You've reached the highest rank possible!",
-                inline=False
+                name="💯 Total Points",
+                value=f"**{points:,}** points",
+                inline=True
             )
-        
-        embed.set_thumbnail(url=target_user.display_avatar.url)
-        embed.set_footer(text="Keep skating to level up! 🛹")
-        
-        # Simple behavior: ephemeral outside #rank, normal inside #rank
-        rank_channel_id = self.get_rank_channel_id(interaction.guild.id) if interaction.guild else None
-        
-        if interaction.channel and rank_channel_id and interaction.channel.id == rank_channel_id:
-            # Used in #rank channel - respond normally
-            await interaction.response.send_message(embed=embed)
-        else:
-            # Used outside #rank channel or no rank channel configured - respond ephemeral
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            
+            if current_rank < 15:
+                embed.add_field(
+                    name="📈 Next Rank",
+                    value=f"{next_rank_info['emoji']} {next_rank_info['name']}",
+                    inline=False
+                )
+                
+                embed.add_field(
+                    name="🎯 Progress",
+                    value=f"`{bar}` {progress_percentage:.1f}%\n**{points_needed:,}** points needed",
+                    inline=False
+                )
+            else:
+                embed.add_field(
+                    name="🎉 Maximum Rank Achieved!",
+                    value="You've reached the highest rank possible!",
+                    inline=False
+                )
+            
+            embed.set_thumbnail(url=target_user.display_avatar.url)
+            embed.set_footer(text="Keep skating to level up! 🛹")
+            
+            # Simple behavior: ephemeral outside #rank, normal inside #rank
+            rank_channel_id = self.get_rank_channel_id(interaction.guild.id) if interaction.guild else None
+            
+            if interaction.channel and rank_channel_id and interaction.channel.id == rank_channel_id:
+                # Used in #rank channel - respond normally
+                await interaction.response.send_message(embed=embed)
+            else:
+                # Used outside #rank channel or no rank channel configured - respond ephemeral
+                await interaction.response.send_message(embed=embed, ephemeral=True)
                 
         except Exception as e:
             print(f"Error in rank command: {e}")
