@@ -76,6 +76,13 @@ async def cleanup_rate_limit_data():
 async def on_ready():
     print(f"🛹 7-Ply is online as {bot.user}!")
     
+    # Set activity status
+    activity = discord.Activity(
+        type=discord.ActivityType.watching,
+        name="skaters land tricks 🛹"
+    )
+    await bot.change_presence(activity=activity)
+    
     # Start background cleanup task
     bot.loop.create_task(background_cleanup())
     
