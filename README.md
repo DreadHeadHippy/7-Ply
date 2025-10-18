@@ -26,7 +26,7 @@ A **premium Discord bot** for skateboarding communities! Features a comprehensiv
 - **Fully Configurable**: Each server chooses their own feature set and customization
 
 ### 🔧 **Admin Tools**
-- `/setup` — Configure ranking system (other features work automatically)
+- **Interactive Setup**: `/setup` guides you through configuring the ranking system and lets you enable/disable other features as needed
 - **Permission Management**: Automatic role and channel setup
 - **Data Persistence**: Reliable JSON-based storage
 - **Error Handling**: Comprehensive logging and user feedback
