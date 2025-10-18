@@ -71,6 +71,193 @@ SKATE_FACTS = [
     "The skateboard truck was invented in 1962 by Bill Richards."
 ]
 
+# Skateboard brand database - from legends to modern day
+SKATE_BRANDS = [
+    {
+        "name": "Powell Peralta",
+        "founded": "1976",
+        "location": "Santa Barbara, California",
+        "status": "Active",
+        "description": "Legendary brand that defined 80s skateboarding with iconic graphics and team riders.",
+        "notable": "Bones Brigade team, iconic skull graphics, and pioneering skateboard videos",
+        "fun_fact": "Their 'Bones Brigade Video Show' (1984) revolutionized skate videos forever."
+    },
+    {
+        "name": "Santa Cruz Skateboards",
+        "founded": "1973",
+        "location": "Santa Cruz, California", 
+        "status": "Active (oldest continuous skateboard company)",
+        "description": "The oldest continuously operating skateboard company in the world.",
+        "notable": "Screaming Hand logo, Jim Phillips artwork, and 50+ years of history",
+        "fun_fact": "The Screaming Hand logo was created in 1985 and became skateboarding's most iconic graphic."
+    },
+    {
+        "name": "Thrasher Magazine",
+        "founded": "1981",
+        "location": "San Francisco, California",
+        "status": "Active",
+        "description": "The skateboard magazine that became a lifestyle brand and cultural icon.",
+        "notable": "Skater of the Year awards, 'Thrasher' logo apparel, and raw skate coverage",
+        "fun_fact": "Their flame logo is now worn by celebrities who've probably never touched a skateboard."
+    },
+    {
+        "name": "Vans",
+        "founded": "1966",
+        "location": "Anaheim, California",
+        "status": "Active (now owned by VF Corporation)",
+        "description": "The first company to make shoes specifically designed for skateboarding.",
+        "notable": "Waffle sole grip, Era and Old Skool models, and 'Off The Wall' slogan",
+        "fun_fact": "Stacy Peralta convinced Vans to sponsor the Z-Boys, launching skate shoe culture."
+    },
+    {
+        "name": "Independent Truck Company",
+        "founded": "1978",
+        "location": "Santa Cruz, California",
+        "status": "Active", 
+        "description": "The most respected truck manufacturer in skateboarding history.",
+        "notable": "Forged baseplate technology, cross logo, and rider-owned company",
+        "fun_fact": "The 'Indy' cross logo tattoo is like a badge of honor in the skate community."
+    },
+    {
+        "name": "Dogtown Skateboards",
+        "founded": "1976",
+        "location": "Venice, California",
+        "status": "Active (reformed multiple times)",
+        "description": "The brand that emerged from the legendary Z-Boys crew of Venice Beach.",
+        "notable": "Z-Boys team, aggressive pool riding style, and Venice Beach culture",
+        "fun_fact": "The original DT logo was designed by Craig Stecyk and became a symbol of rebellion."
+    },
+    {
+        "name": "World Industries",
+        "founded": "1987",
+        "location": "Los Angeles, California",
+        "status": "Defunct (sold 2002)",
+        "defunct": True,
+        "description": "Steve Rocco's controversial company that changed skateboard marketing forever.",
+        "notable": "Flame Boy logo, aggressive advertising, and poaching top pros from other brands",
+        "fun_fact": "Steve Rocco's guerrilla marketing tactics were so wild they made enemies of every major brand."
+    },
+    {
+        "name": "Vision Street Wear",
+        "founded": "1976",
+        "location": "Los Angeles, California",
+        "status": "Defunct (original run ended early 90s)",
+        "defunct": True,
+        "description": "80s skateboard company that also pioneered skate fashion and streetwear.",
+        "notable": "Gator team rider, neon graphics, and crossover into mainstream fashion",
+        "fun_fact": "They were one of the first to realize skateboarding could sell lifestyle, not just equipment."
+    },
+    {
+        "name": "Hosoi Skateboards",
+        "founded": "1982",
+        "location": "California",
+        "status": "Active (reformed)",
+        "description": "Christian Hosoi's signature brand known for vert skateboarding excellence.",
+        "notable": "Hammerhead shape, vert pool riding, and Hosoi's legendary style",
+        "fun_fact": "The Hammerhead shape was revolutionary for transition skating and pool riding."
+    },
+    {
+        "name": "Plan B Skateboards", 
+        "founded": "1991",
+        "location": "San Diego, California",
+        "status": "Active (reformed multiple times)",
+        "description": "Technical street skating company co-founded by Mike Ternasky and Danny Way.",
+        "notable": "Questionable video (1992), technical street innovation, and legendary team",
+        "fun_fact": "Plan B's 'Questionable' video literally questioned everything about skateboarding at the time."
+    },
+    {
+        "name": "Flip Skateboards",
+        "founded": "1991", 
+        "location": "Huntington Beach, California",
+        "status": "Active",
+        "description": "Technical street skateboarding company known for innovation and progression.",
+        "notable": "Sorry video series, technical wizardry, and European influence",
+        "fun_fact": "Geoff Rowley's part in 'Sorry' redefined what was possible in street skating."
+    },
+    {
+        "name": "Girl Skateboards",
+        "founded": "1993",
+        "location": "Los Angeles, California", 
+        "status": "Active",
+        "description": "Rick Howard and Mike Carroll's company focused on style and creativity.",
+        "notable": "Clean graphics, Mouse video (1996), and effortless style approach",
+        "fun_fact": "The 'Mouse' video showed that skateboarding could be artistic without losing its edge."
+    },
+    {
+        "name": "Baker Skateboards",
+        "founded": "2000",
+        "location": "Los Angeles, California",
+        "status": "Active", 
+        "description": "Andrew Reynolds' raw, underground approach to skateboarding and videos.",
+        "notable": "Baker Boys distribution, grimy aesthetic, and East Coast influence",
+        "fun_fact": "Baker's 'bootleg' video aesthetic influenced a whole generation of filmers."
+    },
+    {
+        "name": "Supreme",
+        "founded": "1994",
+        "location": "New York City, New York",
+        "status": "Active (sold to VF Corp 2020)",
+        "description": "NYC skateshop that became a global streetwear phenomenon.",
+        "notable": "Box logo, limited drops, and bridging skate culture with high fashion",
+        "fun_fact": "What started as a small skate shop now has people camping out for $300 t-shirts."
+    },
+    {
+        "name": "Alien Workshop",
+        "founded": "1990",
+        "location": "Dayton, Ohio",
+        "status": "Defunct (closed 2014)", 
+        "defunct": True,
+        "description": "Midwest skateboard company known for artistic graphics and creative videos.",
+        "notable": "Abstract art graphics, Photosynthesis video, and East Coast representation",
+        "fun_fact": "Their graphics were so artistic that museums started collecting their boards as art pieces."
+    },
+    {
+        "name": "Element Skateboards",
+        "founded": "1992",
+        "location": "Irvine, California",
+        "status": "Active",
+        "description": "Nature-inspired skateboard company emphasizing environmental consciousness.",
+        "notable": "Tree logo, Bam Margera sponsorship, and eco-friendly initiatives",
+        "fun_fact": "They were pushing environmental awareness in skateboarding way before it was trendy."
+    },
+    {
+        "name": "Zero Skateboards",
+        "founded": "1996",
+        "location": "Carlsbad, California",
+        "status": "Active",
+        "description": "Jamie Thomas' hardcore approach to skateboarding with heavy metal influence.",
+        "notable": "Skull graphics, gnarly street skating, and 'Chief' Jamie Thomas leadership",
+        "fun_fact": "Jamie Thomas earned the nickname 'The Chief' for his leadership and massive stair sets."
+    },
+    {
+        "name": "Toy Machine",
+        "founded": "1993", 
+        "location": "San Diego, California",
+        "status": "Active",
+        "description": "Ed Templeton's artistic skateboard company blending art with skateboarding.",
+        "notable": "Templeton's photography/art, sect logo, and creative approach",
+        "fun_fact": "Ed Templeton is a respected contemporary artist whose work is displayed in major galleries."
+    },
+    {
+        "name": "Spitfire Wheels",
+        "founded": "1987",
+        "location": "San Francisco, California", 
+        "status": "Active",
+        "description": "Premium skateboard wheel company known for quality and performance.",
+        "notable": "Bighead logo, Formula Four wheels, and consistent quality",
+        "fun_fact": "The Spitfire Bighead is one of the most recognizable logos in all of skateboarding."
+    },
+    {
+        "name": "Bones Bearings",
+        "founded": "1981",
+        "location": "Santa Barbara, California",
+        "status": "Active",
+        "description": "The gold standard for skateboard bearings and precision engineering.",
+        "notable": "Swiss bearings, precision engineering, and industry standard quality",
+        "fun_fact": "Bones Swiss bearings cost more than most complete skateboards but pros swear by them."
+    }
+]
+
 class SkateboardCommands(commands.Cog):
     """Skateboarding-related commands"""
     
@@ -581,6 +768,63 @@ class SkateboardCommands(commands.Cog):
         )
         
         embed.set_footer(text="Keep grinding those weekly missions! 🛹")
+        
+        await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name='brand', description='Learn about skateboard brand history and culture')
+    async def brand(self, interaction: discord.Interaction):
+        """Get information about skateboard brands - legends, history, and culture"""
+        # Award points for using the command
+        await self.award_trick_points(interaction.user.id)
+        
+        brand_data = random.choice(SKATE_BRANDS)
+        
+        embed = discord.Embed(
+            title=f"🏢 {brand_data['name']}",
+            description=brand_data['description'],
+            color=0x00ff00
+        )
+        
+        # Founded info
+        embed.add_field(
+            name="📅 Founded",
+            value=brand_data['founded'],
+            inline=True
+        )
+        
+        # Status info
+        status_emoji = "💀" if brand_data.get('defunct') else "✅"
+        status_text = f"{status_emoji} {brand_data['status']}"
+        embed.add_field(
+            name="📊 Status",
+            value=status_text,
+            inline=True
+        )
+        
+        # Location
+        embed.add_field(
+            name="🌍 Origin",
+            value=brand_data['location'],
+            inline=True
+        )
+        
+        # Notable info or legacy
+        if brand_data.get('notable'):
+            embed.add_field(
+                name="🌟 Notable For",
+                value=brand_data['notable'],
+                inline=False
+            )
+        
+        # Fun fact
+        if brand_data.get('fun_fact'):
+            embed.add_field(
+                name="💡 Fun Fact",
+                value=brand_data['fun_fact'],
+                inline=False
+            )
+        
+        embed.set_footer(text="Respect the brands that built the culture! 🙏")
         
         await interaction.response.send_message(embed=embed)
 
