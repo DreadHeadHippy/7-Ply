@@ -30,12 +30,9 @@ A **premium Discord bot** for skateboarding communities! Features a comprehensiv
 ## 🚀 **Add to Your Server**
 
 ### **1. Invite 7-Ply**
-[**Invite Link Coming Soon**](https://discord.com/oauth2/authorize?client_id=YOUR_BOT_ID&permissions=YOUR_PERMISSIONS&scope=bot%20applications.commands)
+[**🛹 Add to Your Server**](https://discord.com/oauth2/authorize?client_id=1428270097746759682&permissions=2434133072&integration_type=0&scope=applications.commands+bot)
 
-Required permissions:
-- Send Messages & Use Slash Commands
-- Manage Channels & Manage Roles  
-- View Channels & Read Message History
+Click the invite link and authorize the bot with the safe, standard permissions Discord shows you.
 
 ### **2. Quick Setup**
 ```
