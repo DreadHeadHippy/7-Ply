@@ -31,3 +31,6 @@ test_security.py
 # Discord bot token backup (if any)
 *.token
 backup.env
+
+# Internal development documentation
+SCALING_ROADMAP.md

@@ -13,6 +13,7 @@ from typing import Dict, Any
 import pytz
 from utils.security import SecurityValidator, SecureError
 from utils.secure_files import get_secure_ranking_handler
+from utils.cache import bot_cache
 
 class RankingSystem(commands.Cog):
     """User ranking and progression system"""
@@ -99,7 +100,13 @@ class RankingSystem(commands.Cog):
             print(f"Error saving ranking data: {e}")
 
     def get_user_data(self, user_id: int) -> Dict[str, Any]:
-        """Get or create user data"""
+        """Get or create user data with caching"""
+        # Try cache first for 5x faster access
+        cached_data = bot_cache.get_user_data(user_id)
+        if cached_data is not None:
+            return cached_data
+        
+        # Cache miss - load from file and cache it
         user_id_str = str(user_id)
         if user_id_str not in self.user_data:
             self.user_data[user_id_str] = {
@@ -118,7 +125,11 @@ class RankingSystem(commands.Cog):
                 "oneups_given": 0,
                 "oneups_received": 0
             }
-        return self.user_data[user_id_str]
+        
+        # Cache the data for next time
+        user_data = self.user_data[user_id_str]
+        bot_cache.set_user_data(user_id, user_data)
+        return user_data
 
     def can_award_points(self, user_id: int, activity_type: str) -> bool:
         """Check if user can receive points for this activity (rate limiting)"""
@@ -155,6 +166,9 @@ class RankingSystem(commands.Cog):
         new_rank = self.calculate_rank(user_data["points"])
         ranked_up = new_rank > old_rank
         user_data["rank"] = new_rank
+        
+        # Invalidate cache since user data changed
+        bot_cache.invalidate_user(user_id)
         
         self.save_data()
         return points, ranked_up

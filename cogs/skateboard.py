@@ -13,6 +13,7 @@ import aiohttp
 import datetime
 import pytz
 from utils.security import SecurityValidator, SecureError
+from utils.cache import bot_cache
 
 SKATE_TRICKS = [
     "Kickflip", "Heelflip", "Ollie", "Shuvit", "Pop Shuvit", "Varial Kickflip", "Varial Heelflip", "Hardflip", "360 Flip",
