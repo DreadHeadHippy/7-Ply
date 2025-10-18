@@ -20,10 +20,10 @@ A **premium Discord bot** for skateboarding communities! Features a comprehensiv
 
 ### 👥 **Community Features** (Optional)
 - **Interactive Setup**: Choose which features you want during `/setup`
-- **Welcome System**: Greet new members with skateboarding flair (optional)
+- **Custom Welcome System**: Fully configurable welcome messages with templates (optional)
 - **Suggestions System**: Community-driven feature requests with voting (optional)
 - **Temporary Voice Channels**: User-controlled voice rooms (optional)
-- **Fully Configurable**: Each server chooses their own feature set
+- **Fully Configurable**: Each server chooses their own feature set and customization
 
 ### 🔧 **Admin Tools**
 - `/setup` — Configure ranking system (other features work automatically)
@@ -116,6 +116,9 @@ Choose which features you want:
 
 ### **⚙️ Setup & Admin**
 - `/setup` - Interactive server configuration (Admin only)
+- `/welcome_config` - View current welcome message settings
+- `/welcome_set_message` - Set custom welcome message template
+- `/welcome_settings` - Configure welcome message display options
 - `!set_rank @user <rank>` - Manually set user ranks 1-15 (Admin only)
 
 ### **�️ Moderation Tools** (Manage Messages)
@@ -124,7 +127,10 @@ Choose which features you want:
 - `/embed [#channel] [title] <description>` - Custom embed messages
 
 ### **👥 Community Features** (Optional - Configure via `/setup`)
-- **Welcome Messages**: Automatic skateboard-themed greetings (optional)
+- **Custom Welcome Messages**: Fully configurable templates with variables (optional)
+  - Custom message templates with `{user}`, `{server}`, `{member_count}` variables
+  - Toggle embed vs plain text, ping settings, server info display
+  - Customizable embed colors and display options
 - **Suggestions System**: Community-driven feedback with voting (optional)  
 - **Temporary Voice**: Auto-managed voice channels (optional)
 - **Smart Help System**: Commands shown based on your permissions

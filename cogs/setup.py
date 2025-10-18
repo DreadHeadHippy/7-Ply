@@ -65,6 +65,13 @@ class SetupSystem(commands.Cog):
                     "welcome_messages": False,   # Optional
                     "temp_voice": False         # Optional
                 },
+                "welcome_config": {
+                    "custom_message": None,      # Custom welcome message template
+                    "use_embed": True,          # Use embed vs plain message
+                    "embed_color": "00ff00",    # Hex color for embed
+                    "ping_user": True,          # Whether to ping the new user
+                    "show_server_info": True    # Show server member count etc
+                },
                 "setup_completed": False,
                 "setup_date": None
             }
@@ -94,6 +101,17 @@ class SetupSystem(commands.Cog):
         """Check if a specific feature is enabled for a server"""
         config = self.get_server_config(guild_id)
         return config.get("features", {}).get(feature, False)
+    
+    def get_welcome_config(self, guild_id: int) -> dict:
+        """Get welcome message configuration for a server"""
+        config = self.get_server_config(guild_id)
+        return config.get("welcome_config", {
+            "custom_message": None,
+            "use_embed": True,
+            "embed_color": "00ff00", 
+            "ping_user": True,
+            "show_server_info": True
+        })
     
     @app_commands.command(name='setup', description='Configure the bot for your server')
     @app_commands.default_permissions(administrator=True)
@@ -165,6 +183,150 @@ class SetupSystem(commands.Cog):
         )
         
         await interaction.response.send_message(embed=embed, ephemeral=True)
+    
+    @app_commands.command(name='welcome_config', description='Configure custom welcome messages')
+    @app_commands.default_permissions(administrator=True)
+    async def welcome_config(self, interaction: discord.Interaction):
+        """Configure welcome message settings"""
+        
+        guild = interaction.guild
+        if not guild:
+            await interaction.response.send_message("❌ This command can only be used in a server!", ephemeral=True)
+            return
+        
+        # Check if welcome messages are enabled
+        if not self.is_feature_enabled(guild.id, "welcome_messages"):
+            await interaction.response.send_message("❌ Welcome messages are not enabled! Run `/setup` and enable the welcome feature first.", ephemeral=True)
+            return
+        
+        # Show current configuration and customization options
+        welcome_config = self.get_welcome_config(guild.id)
+        
+        embed = discord.Embed(
+            title="👋 Welcome Message Configuration",
+            description="Customize how 7-Ply greets new members!",
+            color=0x00ff88
+        )
+        
+        current_message = welcome_config.get("custom_message") or "**Default skateboard-themed welcome**"
+        embed.add_field(
+            name="📝 Current Message Template:",
+            value=f"```{current_message}```",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="🎨 Available Variables:",
+            value="`{user}` - Mentions the new user\n`{user_name}` - User's display name\n`{server}` - Server name\n`{member_count}` - Current member count\n`{date}` - Current date",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="⚙️ Current Settings:",
+            value=f"📋 Use Embed: {'✅' if welcome_config.get('use_embed', True) else '❌'}\n🎨 Embed Color: #{welcome_config.get('embed_color', '00ff00')}\n🔔 Ping User: {'✅' if welcome_config.get('ping_user', True) else '❌'}\n📊 Show Server Info: {'✅' if welcome_config.get('show_server_info', True) else '❌'}",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="🛠️ How to Customize:",
+            value="Use `/welcome_set_message` to change the message template\nUse `/welcome_settings` to adjust display options",
+            inline=False
+        )
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+    
+    @app_commands.command(name='welcome_set_message', description='Set a custom welcome message template')
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.describe(message="Custom welcome message (use {user}, {server}, {member_count} etc.)")
+    async def welcome_set_message(self, interaction: discord.Interaction, *, message: str):
+        """Set custom welcome message template"""
+        
+        guild = interaction.guild
+        if not guild:
+            await interaction.response.send_message("❌ This command can only be used in a server!", ephemeral=True)
+            return
+        
+        if not self.is_feature_enabled(guild.id, "welcome_messages"):
+            await interaction.response.send_message("❌ Welcome messages are not enabled! Run `/setup` first.", ephemeral=True)
+            return
+        
+        # Validate message length
+        if len(message) > 1000:
+            await interaction.response.send_message("❌ Welcome message must be 1000 characters or less!", ephemeral=True)
+            return
+        
+        # Save custom message
+        config = self.get_server_config(guild.id)
+        if "welcome_config" not in config:
+            config["welcome_config"] = {}
+        config["welcome_config"]["custom_message"] = message
+        self.save_configs()
+        
+        # Preview the message
+        preview_message = message.format(
+            user=interaction.user.mention,
+            user_name=interaction.user.display_name,
+            server=guild.name,
+            member_count=guild.member_count,
+            date="Today"
+        )
+        
+        embed = discord.Embed(
+            title="✅ Welcome Message Updated!",
+            description="Here's how your new welcome message will look:",
+            color=0x00ff00
+        )
+        
+        embed.add_field(
+            name="📝 New Template:",
+            value=f"```{message}```",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="👀 Preview:",
+            value=preview_message,
+            inline=False
+        )
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+    
+    @app_commands.command(name='welcome_settings', description='Adjust welcome message display settings')
+    @app_commands.default_permissions(administrator=True)
+    async def welcome_settings(self, interaction: discord.Interaction):
+        """Configure welcome message display settings"""
+        
+        guild = interaction.guild
+        if not guild:
+            await interaction.response.send_message("❌ This command can only be used in a server!", ephemeral=True)
+            return
+        
+        if not self.is_feature_enabled(guild.id, "welcome_messages"):
+            await interaction.response.send_message("❌ Welcome messages are not enabled! Run `/setup` first.", ephemeral=True)
+            return
+        
+        # Create interactive view for settings
+        view = WelcomeSettingsView(self, guild.id)
+        
+        embed = discord.Embed(
+            title="⚙️ Welcome Message Settings",
+            description="Click the buttons below to toggle settings:",
+            color=0x00ff88
+        )
+        
+        welcome_config = self.get_welcome_config(guild.id)
+        settings_text = f"📋 Use Embed: {'✅' if welcome_config.get('use_embed', True) else '❌'}\n"
+        settings_text += f"🔔 Ping User: {'✅' if welcome_config.get('ping_user', True) else '❌'}\n" 
+        settings_text += f"📊 Show Server Info: {'✅' if welcome_config.get('show_server_info', True) else '❌'}\n"
+        settings_text += f"🎨 Embed Color: #{welcome_config.get('embed_color', '00ff00')}"
+        
+        embed.add_field(
+            name="Current Settings:",
+            value=settings_text,
+            inline=False
+        )
+        
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
     
     @app_commands.command(name='setup_status', description='Check current bot configuration')
     async def setup_status(self, interaction: discord.Interaction):
@@ -548,6 +710,75 @@ class FeatureSelectView(discord.ui.View):
         config["temp_voice_category"] = voice_category.id
         
         return voice_category
+
+class WelcomeSettingsView(discord.ui.View):
+    """Interactive view for welcome message settings"""
+    
+    def __init__(self, setup_cog: 'SetupSystem', guild_id: int):
+        super().__init__(timeout=300)
+        self.setup_cog = setup_cog
+        self.guild_id = guild_id
+    
+    @discord.ui.button(label='📋 Toggle Embed', style=discord.ButtonStyle.secondary)
+    async def toggle_embed(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Toggle embed usage"""
+        config = self.setup_cog.get_server_config(self.guild_id)
+        current = config.get("welcome_config", {}).get("use_embed", True)
+        
+        if "welcome_config" not in config:
+            config["welcome_config"] = {}
+        config["welcome_config"]["use_embed"] = not current
+        self.setup_cog.save_configs()
+        
+        await self.update_display(interaction, f"📋 Embed usage: {'Enabled' if not current else 'Disabled'}")
+    
+    @discord.ui.button(label='🔔 Toggle Ping', style=discord.ButtonStyle.secondary)
+    async def toggle_ping(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Toggle user pinging"""
+        config = self.setup_cog.get_server_config(self.guild_id)
+        current = config.get("welcome_config", {}).get("ping_user", True)
+        
+        if "welcome_config" not in config:
+            config["welcome_config"] = {}
+        config["welcome_config"]["ping_user"] = not current
+        self.setup_cog.save_configs()
+        
+        await self.update_display(interaction, f"🔔 User ping: {'Enabled' if not current else 'Disabled'}")
+    
+    @discord.ui.button(label='📊 Toggle Server Info', style=discord.ButtonStyle.secondary)
+    async def toggle_server_info(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Toggle server info display"""
+        config = self.setup_cog.get_server_config(self.guild_id)
+        current = config.get("welcome_config", {}).get("show_server_info", True)
+        
+        if "welcome_config" not in config:
+            config["welcome_config"] = {}
+        config["welcome_config"]["show_server_info"] = not current
+        self.setup_cog.save_configs()
+        
+        await self.update_display(interaction, f"📊 Server info: {'Enabled' if not current else 'Disabled'}")
+    
+    async def update_display(self, interaction: discord.Interaction, change_message: str):
+        """Update the settings display"""
+        embed = discord.Embed(
+            title="⚙️ Welcome Message Settings",
+            description=f"✅ {change_message}\n\nClick buttons below to toggle more settings:",
+            color=0x00ff88
+        )
+        
+        welcome_config = self.setup_cog.get_welcome_config(self.guild_id)
+        settings_text = f"📋 Use Embed: {'✅' if welcome_config.get('use_embed', True) else '❌'}\n"
+        settings_text += f"🔔 Ping User: {'✅' if welcome_config.get('ping_user', True) else '❌'}\n"
+        settings_text += f"📊 Show Server Info: {'✅' if welcome_config.get('show_server_info', True) else '❌'}\n"
+        settings_text += f"🎨 Embed Color: #{welcome_config.get('embed_color', '00ff00')}"
+        
+        embed.add_field(
+            name="Current Settings:",
+            value=settings_text,
+            inline=False
+        )
+        
+        await interaction.response.edit_message(embed=embed, view=self)
 
 class SetupView(discord.ui.View):
     """Initial setup view - directs to feature selection"""
