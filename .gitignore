@@ -1,0 +1,33 @@
+# Environment variables
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Bot data (user data should not be in version control)
+data/
+logs/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files (optional - remove if you want tests in git)
+test_security.py
+
+# Discord bot token backup (if any)
+*.token
+backup.env
