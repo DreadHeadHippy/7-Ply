@@ -18,11 +18,12 @@ A **premium Discord bot** for skateboarding communities! Features a comprehensiv
 - `/crew` — Discover iconic skate crews that shaped the culture
 - **Themed Interactions**: All commands feature authentic skateboarding culture
 
-### 👥 **Community Features**
-- **One-Click Setup**: Single `/setup` command configures everything automatically
-- **Welcome System**: Greet new members with skateboarding flair
-- **Suggestions System**: Community-driven feature requests with voting
-- **Temporary Voice Channels**: User-controlled voice rooms with lock/unlock features
+### 👥 **Community Features** (Optional)
+- **Interactive Setup**: Choose which features you want during `/setup`
+- **Welcome System**: Greet new members with skateboarding flair (optional)
+- **Suggestions System**: Community-driven feature requests with voting (optional)
+- **Temporary Voice Channels**: User-controlled voice rooms (optional)
+- **Fully Configurable**: Each server chooses their own feature set
 
 ### 🔧 **Admin Tools**
 - `/setup` — Configure ranking system (other features work automatically)
@@ -37,14 +38,16 @@ A **premium Discord bot** for skateboarding communities! Features a comprehensiv
 
 Click the invite link and authorize the bot with the safe, standard permissions Discord shows you.
 
-### **2. Quick Setup**
+### **2. Interactive Setup**
 ```
 /setup
 ```
-Configures your ranking system:
-- ✅ Creates or finds a dedicated ranking channel
-- ✅ Sets up proper permissions automatically  
-- ✅ Provides getting-started guide
+Choose which features you want:
+- 🏆 **Ranking System** - Always included (core feature)
+- 💡 **Suggestions System** - Community feedback with voting (optional)
+- 👋 **Welcome Messages** - Skateboard-themed member greetings (optional) 
+- 🔊 **Temp Voice Channels** - User-managed voice rooms (optional)
+- ✅ Creates channels and sets up permissions automatically
 
 ### **3. Start Skating!**
 - Members earn points through natural server activity
@@ -120,10 +123,10 @@ Configures your ranking system:
 - `/announce [#channel] <message>` - Skateboard-themed announcements  
 - `/embed [#channel] [title] <description>` - Custom embed messages
 
-### **👥 Community Features** 
-- **Welcome Messages**: Automatic skateboard-themed greetings
-- **Suggestions System**: Community-driven feedback with voting  
-- **Temporary Voice**: Auto-managed voice channels
+### **👥 Community Features** (Optional - Configure via `/setup`)
+- **Welcome Messages**: Automatic skateboard-themed greetings (optional)
+- **Suggestions System**: Community-driven feedback with voting (optional)  
+- **Temporary Voice**: Auto-managed voice channels (optional)
 - **Smart Help System**: Commands shown based on your permissions
 
 ## 🔍 **Troubleshooting**

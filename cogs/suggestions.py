@@ -1,8 +1,7 @@
 import discord
 from discord.ext import commands
 
-# Skateboarding-themed suggestion system
-SUGGESTIONS_CHANNEL_ID = 1428418247291830403
+# Skateboarding-themed suggestion system - now configurable per server!
 
 class SuggestionView(discord.ui.View):
     def __init__(self, author, thread):
@@ -26,16 +25,19 @@ class SuggestionView(discord.ui.View):
         
         # Fetch the message fresh to get accurate reaction counts
         try:
-            fresh_message = await interaction.channel.fetch_message(interaction.message.id)
-            yays = 0
-            nays = 0
-            
-            if fresh_message.reactions:
-                for reaction in fresh_message.reactions:
-                    if str(reaction.emoji) == "✅":
-                        yays = max(0, reaction.count - 1)  # Subtract 1 for bot's reaction
-                    elif str(reaction.emoji) == "❌":
-                        nays = max(0, reaction.count - 1)  # Subtract 1 for bot's reaction
+            if isinstance(interaction.channel, discord.TextChannel):
+                fresh_message = await interaction.channel.fetch_message(interaction.message.id)
+                yays = 0
+                nays = 0
+                
+                if fresh_message.reactions:
+                    for reaction in fresh_message.reactions:
+                        if str(reaction.emoji) == "✅":
+                            yays = max(0, reaction.count - 1)  # Subtract 1 for bot's reaction
+                        elif str(reaction.emoji) == "❌":
+                            nays = max(0, reaction.count - 1)  # Subtract 1 for bot's reaction
+            else:
+                raise Exception("Channel doesn't support fetch_message")
         except:
             # Fallback to cached reactions if fetch fails
             yays = 0
@@ -78,16 +80,19 @@ class SuggestionView(discord.ui.View):
         
         # Fetch the message fresh to get accurate reaction counts
         try:
-            fresh_message = await interaction.channel.fetch_message(interaction.message.id)
-            yays = 0
-            nays = 0
-            
-            if fresh_message.reactions:
-                for reaction in fresh_message.reactions:
-                    if str(reaction.emoji) == "✅":
-                        yays = max(0, reaction.count - 1)  # Subtract 1 for bot's reaction
-                    elif str(reaction.emoji) == "❌":
-                        nays = max(0, reaction.count - 1)  # Subtract 1 for bot's reaction
+            if isinstance(interaction.channel, discord.TextChannel):
+                fresh_message = await interaction.channel.fetch_message(interaction.message.id)
+                yays = 0
+                nays = 0
+                
+                if fresh_message.reactions:
+                    for reaction in fresh_message.reactions:
+                        if str(reaction.emoji) == "✅":
+                            yays = max(0, reaction.count - 1)  # Subtract 1 for bot's reaction
+                        elif str(reaction.emoji) == "❌":
+                            nays = max(0, reaction.count - 1)  # Subtract 1 for bot's reaction
+            else:
+                raise Exception("Channel doesn't support fetch_message")
         except:
             # Fallback to cached reactions if fetch fails
             yays = 0
@@ -116,6 +121,20 @@ class SuggestionHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    def get_suggestions_channel_id(self, guild_id: int) -> int | None:
+        """Get the configured suggestions channel for a server"""
+        setup_cog = self.bot.get_cog('SetupSystem')
+        if setup_cog:
+            return setup_cog.get_suggestions_channel_id(guild_id)
+        return None
+    
+    def is_suggestions_enabled(self, guild_id: int) -> bool:
+        """Check if suggestions feature is enabled for a server"""
+        setup_cog = self.bot.get_cog('SetupSystem')
+        if setup_cog:
+            return setup_cog.is_feature_enabled(guild_id, "suggestions_system")
+        return False
+
     @commands.Cog.listener()
     async def on_ready(self):
         # Add persistent view for buttons to work after bot restart
@@ -127,8 +146,17 @@ class SuggestionHandler(commands.Cog):
         if message.author.bot:
             return
         
-        # Only handle messages in the suggestions channel
-        if message.channel.id != SUGGESTIONS_CHANNEL_ID:
+        # Only handle messages in servers (not DMs)
+        if not message.guild:
+            return
+        
+        # Check if suggestions are enabled for this server
+        if not self.is_suggestions_enabled(message.guild.id):
+            return
+        
+        # Get the configured suggestions channel for this server
+        suggestions_channel_id = self.get_suggestions_channel_id(message.guild.id)
+        if not suggestions_channel_id or message.channel.id != suggestions_channel_id:
             return
         
         # Don't process commands in suggestions channel
@@ -186,13 +214,20 @@ class SuggestionHandler(commands.Cog):
     @commands.command(name='suggest')
     async def suggest_command(self, ctx, *, suggestion):
         """Submit a suggestion using a command (alternative to posting in suggestions channel)"""
-        if ctx.channel.id == SUGGESTIONS_CHANNEL_ID:
+        
+        # Check if suggestions are enabled
+        if not self.is_suggestions_enabled(ctx.guild.id):
+            await ctx.send("❌ Suggestions system is not enabled on this server. Ask an admin to run `/setup` to configure it!")
+            return
+        
+        suggestions_channel_id = self.get_suggestions_channel_id(ctx.guild.id)
+        if ctx.channel.id == suggestions_channel_id:
             await ctx.send("❌ Just post your suggestion directly in this channel! No need to use the command here.", delete_after=5)
             return
 
-        suggestions_channel = self.bot.get_channel(SUGGESTIONS_CHANNEL_ID)
+        suggestions_channel = self.bot.get_channel(suggestions_channel_id)
         if not suggestions_channel:
-            await ctx.send("❌ Suggestions channel not found!")
+            await ctx.send("❌ Suggestions channel not found! Ask an admin to run `/setup` to configure it properly.")
             return
 
         try:

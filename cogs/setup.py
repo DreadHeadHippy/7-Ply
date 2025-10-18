@@ -56,6 +56,15 @@ class SetupSystem(commands.Cog):
         if guild_id_str not in self.server_configs:
             self.server_configs[guild_id_str] = {
                 "rank_channel": None,
+                "suggestions_channel": None,
+                "welcome_channel": None,
+                "temp_voice_category": None,
+                "features": {
+                    "ranking_system": True,      # Core feature - always enabled
+                    "suggestions_system": False, # Optional
+                    "welcome_messages": False,   # Optional
+                    "temp_voice": False         # Optional
+                },
                 "setup_completed": False,
                 "setup_date": None
             }
@@ -65,6 +74,26 @@ class SetupSystem(commands.Cog):
         """Get the configured rank channel ID for a server"""
         config = self.get_server_config(guild_id)
         return config.get("rank_channel")
+    
+    def get_suggestions_channel_id(self, guild_id: int) -> Optional[int]:
+        """Get the configured suggestions channel ID for a server"""
+        config = self.get_server_config(guild_id)
+        return config.get("suggestions_channel")
+    
+    def get_welcome_channel_id(self, guild_id: int) -> Optional[int]:
+        """Get the configured welcome channel ID for a server"""
+        config = self.get_server_config(guild_id)
+        return config.get("welcome_channel")
+    
+    def get_temp_voice_category_id(self, guild_id: int) -> Optional[int]:
+        """Get the configured temp voice category ID for a server"""
+        config = self.get_server_config(guild_id)
+        return config.get("temp_voice_category")
+    
+    def is_feature_enabled(self, guild_id: int, feature: str) -> bool:
+        """Check if a specific feature is enabled for a server"""
+        config = self.get_server_config(guild_id)
+        return config.get("features", {}).get(feature, False)
     
     @app_commands.command(name='setup', description='Configure the bot for your server')
     @app_commands.default_permissions(administrator=True)
@@ -86,8 +115,8 @@ class SetupSystem(commands.Cog):
         )
         
         embed.add_field(
-            name="📋 What This Setup Does:",
-            value="• Creates or configures a **#rank** channel for ranking activities\n• Sets up proper permissions\n• Configures the ranking system\n• Enables all skateboard features",
+            name="🎯 Available Features:",
+            value="🏆 **Ranking System** - User progression and points (Always included)\n💡 **Suggestions System** - Community feedback with voting\n👋 **Welcome Messages** - Greet new members\n🔊 **Temp Voice Channels** - User-managed voice rooms",
             inline=False
         )
         
@@ -206,24 +235,133 @@ class SetupSystem(commands.Cog):
         
         await interaction.response.send_message(embed=embed)
 
-class SetupView(discord.ui.View):
-    """Interactive setup view with buttons"""
+class FeatureSelectView(discord.ui.View):
+    """Feature selection view for setup"""
     
     def __init__(self, setup_cog: SetupSystem, guild: discord.Guild):
         super().__init__(timeout=300)  # 5 minute timeout
         self.setup_cog = setup_cog
         self.guild = guild
+        self.selected_features = {"ranking_system": True}  # Always enabled
+        self.add_feature_selectors()
     
-    @discord.ui.button(label='🚀 Start Setup', style=discord.ButtonStyle.green)
-    async def start_setup(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """Start the setup process"""
+    def add_feature_selectors(self):
+        """Add feature selection buttons"""
+        # Suggestions System
+        suggestions_button = discord.ui.Button(
+            label="� Suggestions System",
+            style=discord.ButtonStyle.secondary,
+            custom_id="toggle_suggestions"
+        )
+        suggestions_button.callback = self.toggle_suggestions
+        self.add_item(suggestions_button)
         
-        # Check permissions
-        # Check if user has administrator permissions
-        if not isinstance(interaction.user, discord.Member) or not interaction.user.guild_permissions.administrator:
-            await interaction.response.send_message("❌ You need Administrator permissions to run setup!", ephemeral=True)
+        # Welcome Messages  
+        welcome_button = discord.ui.Button(
+            label="👋 Welcome Messages", 
+            style=discord.ButtonStyle.secondary,
+            custom_id="toggle_welcome"
+        )
+        welcome_button.callback = self.toggle_welcome
+        self.add_item(welcome_button)
+        
+        # Temp Voice
+        voice_button = discord.ui.Button(
+            label="🔊 Temp Voice Channels",
+            style=discord.ButtonStyle.secondary, 
+            custom_id="toggle_voice"
+        )
+        voice_button.callback = self.toggle_voice
+        self.add_item(voice_button)
+        
+        # Proceed button
+        proceed_button = discord.ui.Button(
+            label="🚀 Proceed with Setup",
+            style=discord.ButtonStyle.green,
+            custom_id="proceed_setup"
+        )
+        proceed_button.callback = self.proceed_setup
+        self.add_item(proceed_button)
+    
+    async def toggle_suggestions(self, interaction: discord.Interaction):
+        """Toggle suggestions system"""
+        if not await self.check_permissions(interaction):
             return
         
+        current = self.selected_features.get("suggestions_system", False)
+        self.selected_features["suggestions_system"] = not current
+        await self.update_display(interaction)
+    
+    async def toggle_welcome(self, interaction: discord.Interaction):
+        """Toggle welcome messages"""
+        if not await self.check_permissions(interaction):
+            return
+        
+        current = self.selected_features.get("welcome_messages", False)
+        self.selected_features["welcome_messages"] = not current
+        await self.update_display(interaction)
+    
+    async def toggle_voice(self, interaction: discord.Interaction):
+        """Toggle temp voice channels"""
+        if not await self.check_permissions(interaction):
+            return
+        
+        current = self.selected_features.get("temp_voice", False)
+        self.selected_features["temp_voice"] = not current
+        await self.update_display(interaction)
+    
+    async def check_permissions(self, interaction: discord.Interaction) -> bool:
+        """Check if user has permissions"""
+        if not isinstance(interaction.user, discord.Member) or not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message("❌ You need Administrator permissions!", ephemeral=True)
+            return False
+        return True
+    
+    async def update_display(self, interaction: discord.Interaction):
+        """Update the display with current selections"""
+        embed = discord.Embed(
+            title="🛹 7-Ply Bot Setup - Feature Selection",
+            description="Choose which features you want to enable:",
+            color=0x00ff88
+        )
+        
+        # Show current selections
+        feature_status = "🏆 **Ranking System** ✅ (Always enabled)\n"
+        
+        if self.selected_features.get("suggestions_system"):
+            feature_status += "💡 **Suggestions System** ✅\n"
+        else:
+            feature_status += "💡 **Suggestions System** ❌\n"
+            
+        if self.selected_features.get("welcome_messages"):
+            feature_status += "👋 **Welcome Messages** ✅\n"
+        else:
+            feature_status += "👋 **Welcome Messages** ❌\n"
+            
+        if self.selected_features.get("temp_voice"):
+            feature_status += "🔊 **Temp Voice Channels** ✅"
+        else:
+            feature_status += "🔊 **Temp Voice Channels** ❌"
+        
+        embed.add_field(
+            name="📋 Selected Features:",
+            value=feature_status,
+            inline=False
+        )
+        
+        embed.add_field(
+            name="💡 Feature Descriptions:",
+            value="• **Suggestions** - Community feedback system with voting\n• **Welcome** - Greet new members with skateboard flair\n• **Temp Voice** - Auto-managed voice channels for sessions",
+            inline=False
+        )
+        
+        await interaction.response.edit_message(embed=embed, view=self)
+    
+    async def proceed_setup(self, interaction: discord.Interaction):
+        """Proceed with setup using selected features"""
+        if not await self.check_permissions(interaction):
+            return
+            
         # Check bot permissions
         bot_member = self.guild.get_member(self.setup_cog.bot.user.id)
         if not bot_member or not bot_member.guild_permissions.manage_channels:
@@ -231,6 +369,225 @@ class SetupView(discord.ui.View):
             return
         
         await self.run_setup(interaction)
+    
+    async def run_setup(self, interaction: discord.Interaction):
+        """Run the actual setup process with selected features"""
+        
+        setup_embed = discord.Embed(
+            title="🔧 Running Setup...",
+            description="Setting up your server configuration...",
+            color=0xffd700
+        )
+        
+        await interaction.response.edit_message(embed=setup_embed, view=None)
+        
+        try:
+            config = self.setup_cog.get_server_config(self.guild.id)
+            created_channels = []
+            
+            # Step 1: Always set up ranking system
+            rank_channel = await self.setup_rank_channel()
+            created_channels.append(f"🏆 {rank_channel.mention} - Ranking announcements")
+            
+            # Step 2: Set up optional features
+            if self.selected_features.get("suggestions_system"):
+                suggestions_channel = await self.setup_suggestions_channel()
+                created_channels.append(f"💡 {suggestions_channel.mention} - Community suggestions")
+                
+            if self.selected_features.get("welcome_messages"):
+                welcome_channel = await self.setup_welcome_channel()
+                created_channels.append(f"👋 {welcome_channel.mention} - Welcome messages")
+                
+            if self.selected_features.get("temp_voice"):
+                voice_category = await self.setup_temp_voice()
+                created_channels.append(f"🔊 {voice_category.name} - Temp voice category")
+            
+            # Step 3: Save configuration
+            config["features"] = self.selected_features.copy()
+            config["setup_completed"] = True
+            config["setup_date"] = self.setup_cog.get_edt_now().strftime("%Y-%m-%d")
+            self.setup_cog.save_configs()
+            
+            # Step 4: Send success message
+            success_embed = discord.Embed(
+                title="✅ Setup Complete!",
+                description="Your server is now configured for 7-Ply Bot!",
+                color=0x00ff00
+            )
+            
+            success_embed.add_field(
+                name="📊 Configured Channels/Features:",
+                value="\n".join(created_channels),
+                inline=False
+            )
+            
+            success_embed.add_field(
+                name="🎯 Next Steps:",
+                value="• Members can start earning points by chatting\n• Use `/rank` to check progress\n• Use `/help` to see all available commands\n• Try `/trick` or `/skatefact` for skateboard content!",
+                inline=False
+            )
+            
+            success_embed.set_footer(text="Setup completed successfully! 🛹")
+            
+            await interaction.edit_original_response(embed=success_embed)
+            
+        except Exception as e:
+            error_embed = discord.Embed(
+                title="❌ Setup Failed",
+                description=f"An error occurred during setup: {str(e)}",
+                color=0xff0000
+            )
+            await interaction.edit_original_response(embed=error_embed)
+            print(f"Setup error: {e}")
+    
+    async def setup_rank_channel(self) -> discord.TextChannel:
+        """Set up the ranking channel"""
+        # Look for existing rank channel
+        for channel in self.guild.text_channels:
+            if channel.name.lower() in ['rank', 'ranks', 'ranking']:
+                rank_channel = channel
+                break
+        else:
+            # Create new rank channel
+            rank_channel = await self.guild.create_text_channel(
+                name='rank-ups',
+                topic='🛹 User rankings and progression - powered by 7-Ply Bot',
+                reason='7-Ply Bot setup - ranking channel'
+            )
+        
+        # Set up permissions
+        await rank_channel.set_permissions(
+            self.guild.default_role,
+            send_messages=False,
+            add_reactions=True,
+            read_messages=True
+        )
+        
+        bot_member = self.guild.get_member(self.setup_cog.bot.user.id)
+        if bot_member:
+            await rank_channel.set_permissions(
+                bot_member,
+                send_messages=True,
+                embed_links=True,
+                attach_files=True,
+                read_messages=True
+            )
+        
+        # Save channel ID
+        config = self.setup_cog.get_server_config(self.guild.id)
+        config["rank_channel"] = rank_channel.id
+        
+        return rank_channel
+    
+    async def setup_suggestions_channel(self) -> discord.TextChannel:
+        """Set up the suggestions channel"""
+        # Look for existing suggestions channel
+        for channel in self.guild.text_channels:
+            if 'suggest' in channel.name.lower():
+                suggestions_channel = channel
+                break
+        else:
+            # Create new suggestions channel
+            suggestions_channel = await self.guild.create_text_channel(
+                name='suggestions',
+                topic='💡 Community suggestions and feedback - powered by 7-Ply Bot',
+                reason='7-Ply Bot setup - suggestions channel'
+            )
+        
+        # Save channel ID
+        config = self.setup_cog.get_server_config(self.guild.id)
+        config["suggestions_channel"] = suggestions_channel.id
+        
+        return suggestions_channel
+    
+    async def setup_welcome_channel(self) -> discord.TextChannel:
+        """Set up welcome channel - uses general or creates one"""
+        # Look for general/welcome channel
+        welcome_channel = None
+        for channel in self.guild.text_channels:
+            if channel.name.lower() in ['general', 'welcome', 'lobby', 'main']:
+                welcome_channel = channel
+                break
+        
+        if not welcome_channel:
+            # Use system channel if available
+            welcome_channel = self.guild.system_channel
+            
+        if not welcome_channel:
+            # Create welcome channel as last resort
+            welcome_channel = await self.guild.create_text_channel(
+                name='welcome',
+                topic='👋 Welcome new members - powered by 7-Ply Bot',
+                reason='7-Ply Bot setup - welcome channel'
+            )
+        
+        # Save channel ID
+        config = self.setup_cog.get_server_config(self.guild.id)
+        config["welcome_channel"] = welcome_channel.id
+        
+        return welcome_channel
+    
+    async def setup_temp_voice(self) -> discord.CategoryChannel:
+        """Set up temporary voice category"""
+        # Look for existing voice category
+        voice_category = None
+        for category in self.guild.categories:
+            if 'voice' in category.name.lower() or 'temp' in category.name.lower():
+                voice_category = category
+                break
+        
+        if not voice_category:
+            # Create new category
+            voice_category = await self.guild.create_category(
+                name='🔊 Temp Voice',
+                reason='7-Ply Bot setup - temporary voice category'
+            )
+        
+        # Save category ID
+        config = self.setup_cog.get_server_config(self.guild.id)
+        config["temp_voice_category"] = voice_category.id
+        
+        return voice_category
+
+class SetupView(discord.ui.View):
+    """Initial setup view - directs to feature selection"""
+    
+    def __init__(self, setup_cog: SetupSystem, guild: discord.Guild):
+        super().__init__(timeout=300)  # 5 minute timeout
+        self.setup_cog = setup_cog
+        self.guild = guild
+    
+    @discord.ui.button(label='🎯 Select Features', style=discord.ButtonStyle.green)
+    async def select_features(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Start feature selection"""
+        
+        # Check permissions
+        if not isinstance(interaction.user, discord.Member) or not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message("❌ You need Administrator permissions to run setup!", ephemeral=True)
+            return
+        
+        # Switch to feature selection view
+        feature_view = FeatureSelectView(self.setup_cog, self.guild)
+        
+        embed = discord.Embed(
+            title="🛹 7-Ply Bot Setup - Feature Selection",
+            description="Choose which features you want to enable:",
+            color=0x00ff88
+        )
+        
+        embed.add_field(
+            name="📋 Available Features:",
+            value="🏆 **Ranking System** ✅ (Always enabled)\n💡 **Suggestions System** ❌\n👋 **Welcome Messages** ❌\n🔊 **Temp Voice Channels** ❌",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="💡 Click buttons to toggle features, then proceed!",
+            value="• **Suggestions** - Community feedback system with voting\n• **Welcome** - Greet new members with skateboard flair\n• **Temp Voice** - Auto-managed voice channels for sessions",
+            inline=False
+        )
+        
+        await interaction.response.edit_message(embed=embed, view=feature_view)
     
     async def run_setup(self, interaction: discord.Interaction):
         """Run the actual setup process"""
