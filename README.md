@@ -11,18 +11,18 @@ A **100% plug-and-play** Discord bot for skateboarding communities! Features a c
 - **Community Recognition**: `/1up` command lets users boost each other's progress
 
 ### 🛹 **Skateboard Commands**
-- `/trick` — Perform random skateboard tricks with style points
+- `/trick` — Get random skateboard tricks with control images
 - `/skatefact` — Learn fascinating skateboarding history and facts
 - **Themed Interactions**: All commands feature authentic skateboarding culture
 
 ### 👥 **Community Features**
-- **Interactive Setup**: One `/setup` command configures everything automatically
+- **One-Click Setup**: Single `/setup` command configures everything automatically
 - **Welcome System**: Greet new members with skateboarding flair
 - **Suggestions System**: Community-driven feature requests with voting
-- **Temporary Voice Channels**: Auto-managed voice rooms for sessions
+- **Temporary Voice Channels**: User-controlled voice rooms with lock/unlock features
 
 ### 🔧 **Admin Tools**
-- `/setup` — Complete server configuration in minutes
+- `/setup` — Configure ranking system (other features work automatically)
 - **Permission Management**: Automatic role and channel setup
 - **Data Persistence**: Reliable JSON-based storage
 - **Error Handling**: Comprehensive logging and user feedback
@@ -35,15 +35,18 @@ Ensure 7-Ply has these Discord permissions:
 - Manage Channels & Manage Roles  
 - View Channels & Read Message History
 
-### **2. Run Setup**
+### **2. Configure Core Features**
 ```
 /setup
 ```
-The interactive setup wizard will:
-- ✅ Create or configure a rank announcements channel
-- ✅ Set proper permissions automatically
-- ✅ Test configuration and provide feedback
-- ✅ Guide you through any issues
+This sets up the **ranking system only**:
+- ✅ Creates or finds a dedicated ranking channel
+- ✅ Configures permissions for rank announcements  
+- ✅ Provides getting-started information
+
+**Optional configurations:**
+- **Welcome Messages**: Auto-detects common channels (`#welcome`, `#general`) or use `!set_welcome_channel`
+- **Other Features**: Work automatically without setup
 
 ### **3. Start Engaging!**
 - Members earn points through natural server activity
