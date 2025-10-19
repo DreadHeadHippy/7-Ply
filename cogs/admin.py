@@ -20,6 +20,8 @@ class AdminCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.command_cooldowns = {}  # Store last use times
+        self.user_slowmodes = {}  # Store per-user slowmode settings {guild_id: {user_id: slowmode_seconds}}
+        self.user_last_message = {}  # Track last message times {guild_id: {user_id: timestamp}}
     
     def check_cooldown(self, user_id: int, command_name: str, cooldown_seconds: int = 5) -> bool:
         """Check if user is on cooldown for a command"""
@@ -347,6 +349,149 @@ class AdminCommands(commands.Cog):
         embed.set_footer(text="🛹 Modern Discord uses slash commands! Try typing '/' to see all available commands")
         
         await ctx.send(embed=embed)
+
+    @app_commands.command(name='slowmode', description='Set personal slowmode for a user')
+    @app_commands.default_permissions(manage_messages=True)
+    async def user_slowmode(self, interaction: discord.Interaction, user: discord.Member, duration: str):
+        """Set personal slowmode for a specific user"""
+        
+        if not interaction.guild:
+            await interaction.response.send_message("❌ This command can only be used in a server!", ephemeral=True)
+            return
+        
+        try:
+            # Parse duration
+            if duration.lower() in ['off', 'remove', '0']:
+                slowmode_seconds = 0
+                action = "removed"
+            else:
+                # Parse duration string (e.g., "30s", "2m", "1h")
+                duration = duration.lower().strip()
+                if duration.endswith('s'):
+                    slowmode_seconds = int(duration[:-1])
+                elif duration.endswith('m'):
+                    slowmode_seconds = int(duration[:-1]) * 60
+                elif duration.endswith('h'):
+                    slowmode_seconds = int(duration[:-1]) * 3600
+                else:
+                    # Assume seconds if no unit
+                    slowmode_seconds = int(duration)
+                
+                # Limit maximum slowmode
+                if slowmode_seconds > 21600:  # 6 hours max
+                    await interaction.response.send_message(
+                        "❌ Maximum slowmode duration is 6 hours!",
+                        ephemeral=True
+                    )
+                    return
+                
+                action = "set"
+            
+            guild_id = interaction.guild.id
+            
+            # Initialize guild data if needed
+            if guild_id not in self.user_slowmodes:
+                self.user_slowmodes[guild_id] = {}
+            
+            # Set or remove slowmode
+            if slowmode_seconds > 0:
+                self.user_slowmodes[guild_id][user.id] = slowmode_seconds
+            else:
+                self.user_slowmodes[guild_id].pop(user.id, None)
+            
+            # Create response
+            if action == "removed":
+                embed = discord.Embed(
+                    title="✅ Slowmode Removed",
+                    description=f"Personal slowmode removed for {user.mention}",
+                    color=0x00ff88
+                )
+            else:
+                # Format duration for display
+                if slowmode_seconds < 60:
+                    duration_text = f"{slowmode_seconds} seconds"
+                elif slowmode_seconds < 3600:
+                    duration_text = f"{slowmode_seconds // 60} minutes"
+                else:
+                    duration_text = f"{slowmode_seconds // 3600} hours"
+                
+                embed = discord.Embed(
+                    title="⏱️ Personal Slowmode Set",
+                    description=f"{user.mention} can now only send 1 message every **{duration_text}**",
+                    color=0xff6600
+                )
+                
+                embed.add_field(
+                    name="💡 How it works:",
+                    value="• User can see their message for a few seconds\n• Bot then removes it with an ephemeral warning\n• Other users aren't affected",
+                    inline=False
+                )
+            
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            
+        except ValueError:
+            await interaction.response.send_message(
+                "❌ Invalid duration format! Use: `30s`, `2m`, `1h`, or `off`",
+                ephemeral=True
+            )
+        except Exception as e:
+            print(f"Error in slowmode command: {e}")
+            await interaction.response.send_message(
+                "❌ Something went wrong setting slowmode!",
+                ephemeral=True
+            )
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        """Monitor messages for per-user slowmode enforcement"""
+        
+        # Ignore bot messages and DMs
+        if message.author.bot or not message.guild:
+            return
+        
+        guild_id = message.guild.id
+        user_id = message.author.id
+        
+        # Check if user has personal slowmode
+        if (guild_id in self.user_slowmodes and 
+            user_id in self.user_slowmodes[guild_id]):
+            
+            slowmode_seconds = self.user_slowmodes[guild_id][user_id]
+            current_time = time.time()
+            
+            # Initialize guild tracking if needed
+            if guild_id not in self.user_last_message:
+                self.user_last_message[guild_id] = {}
+            
+            # Check if user is on cooldown
+            if user_id in self.user_last_message[guild_id]:
+                time_since_last = current_time - self.user_last_message[guild_id][user_id]
+                
+                if time_since_last < slowmode_seconds:
+                    # User is on cooldown - show warning and delete message
+                    time_left = int(slowmode_seconds - time_since_last)
+                    
+                    # Send ephemeral-style warning (delete after a few seconds)
+                    warning_message = await message.channel.send(
+                        f"⏱️ {message.author.mention}, you're on personal slowmode - wait **{time_left}** more seconds before your next message",
+                        delete_after=5
+                    )
+                    
+                    # Wait a moment, then delete the original message
+                    import asyncio
+                    await asyncio.sleep(3)
+                    try:
+                        await message.delete()
+                    except discord.NotFound:
+                        pass  # Message already deleted
+                    except discord.Forbidden:
+                        # Bot doesn't have delete permissions
+                        pass
+                    
+                    return
+            
+            # Update last message time
+            self.user_last_message[guild_id][user_id] = current_time
 
 async def setup(bot):
     await bot.add_cog(AdminCommands(bot))
