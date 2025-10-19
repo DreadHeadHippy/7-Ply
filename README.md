@@ -12,12 +12,17 @@ A **premium Discord bot** for skateboarding communities! Features a comprehensiv
 
 ### 🛹 **Skateboard Commands**
 - `/trick` — Get random skateboard tricks for skate. with control images
+- `/tricklist` — Show all available skateboarding tricks (EA's Skate game + bonus IRL tricks)
 - `/skatefact` — Learn fascinating skateboarding history and facts
 - `/skatehistory` — Learn about skateboarding history
 - `/brand` — Explore skateboard brand history from legends to modern day  
 - `/skater` — Learn about legendary skaters and their contributions
 - `/crew` — Discover iconic skate crews that shaped the culture
-- **Themed Interactions**: All commands feature authentic skateboarding culture### 👥 **Community Features** (Optional)
+- `/daily` — Check when daily missions reset in EA's Skate game (auto timezone correction)
+- `/weekly` — Check when weekly missions reset (Tuesdays, auto timezone correction)
+- **Themed Interactions**: All commands feature authentic skateboarding culture
+
+### 👥 **Community Features** (Optional)
 - **Interactive Setup**: Choose which features you want during `/setup`
 - **Reaction Roles**: Skateboard-themed self-serve roles (`/reactionroles`)
 - **Custom Welcome System**: Fully configurable welcome messages with templates (optional)
@@ -100,15 +105,20 @@ Choose which features you want:
 
 ### **🏆 Ranking System**
 - `/rank [user]` - Check rank progress (yours or another member's)
+- `/ranks` - View all available ranks and requirements
 - `/leaderboard` - View top-ranked server members
 - `/1up @user` - Give someone a 25-point boost (30min cooldown)
 
 ### **🛹 Skateboard Culture**
 - `/trick` - Perform a random skateboard trick with style
+- `/tricklist` - Show all available skateboarding tricks (EA's Skate game + bonus IRL tricks)
 - `/skatefact` - Learn fascinating skateboarding history and facts
+- `/skatehistory` - Learn about skateboarding history
 - `/brand` - Explore skateboard brand history from legends to modern day
 - `/skater` - Learn about legendary skaters and their contributions
 - `/crew` - Discover iconic skate crews that shaped the culture
+- `/daily` - Check when daily missions reset in EA's Skate game (auto timezone correction)
+- `/weekly` - Check when weekly missions reset (Tuesdays, auto timezone correction)
 
 ### **🆘 Help & Information**
 - `/help` - Show all available commands based on your permissions
@@ -117,6 +127,9 @@ Choose which features you want:
 
 ### **⚙️ Setup & Admin**
 - `/setup` - Interactive server configuration (Admin only)
+- `/setup_edit` - Edit specific bot settings (Admin only)
+- `/setup_reset` - Reset bot configuration (Admin only)
+- `/setup_status` - Check current bot configuration (Admin only)
 - `/welcome_config` - View current welcome message settings
 - `/welcome_set_message` - Set custom welcome message template
 - `/welcome_settings` - Configure welcome message display options
@@ -126,6 +139,9 @@ Choose which features you want:
 - `/say [#channel] <message>` - Make bot send messages
 - `/announce [#channel] <message>` - Skateboard-themed announcements  
 - `/embed [#channel] [title] <description>` - Custom embed messages
+- `/slowmode @user <duration>` - Set personal slowmode for a user (30s, 2m, 1h, etc.)
+- `/slowmode_list` - List all active personal slowmodes
+- `/slowmode_remove @user` - Remove personal slowmode from a user
 - `/reactionroles [#channel]` - Create reaction role messages (default skateboard themes or fully customizable)
 - `/reactionroles_manage` - Edit, delete, or view existing reaction role messages
 
