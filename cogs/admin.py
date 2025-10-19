@@ -498,8 +498,8 @@ class AdminCommands(commands.Cog):
         
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    @app_commands.command(name='bot_status', description='Show bot health and system statistics')
-    async def bot_status(self, interaction: discord.Interaction):
+    @app_commands.command(name='status', description='Show bot health and system statistics')
+    async def status(self, interaction: discord.Interaction):
         """Show comprehensive bot status and health metrics - Owner only"""
         # Check if user is bot owner
         if not await self.bot.is_owner(interaction.user):
