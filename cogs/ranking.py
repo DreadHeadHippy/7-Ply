@@ -211,6 +211,15 @@ class RankingSystem(commands.Cog):
                 )
                 return
             
+            # Check if target is a bot
+            if target_user.bot:
+                await interaction.response.send_message(
+                    f"🤖 {target_user.display_name} is a bot and doesn't participate in the ranking system!\n"
+                    "The ranking system is designed for human members only. Try checking your own rank with `/rank` or another member's rank!",
+                    ephemeral=True
+                )
+                return
+            
             user_data = self.get_user_data(target_user.id)
             
             current_rank = user_data["rank"]
