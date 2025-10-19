@@ -265,10 +265,17 @@ class AdminCommands(commands.Cog):
             value=(
                 "`/rank [user]` - Check ranking progress\n"
                 "`/leaderboard` - View top-ranked members\n"
+                "`/ranks` - View all available ranks and requirements\n"
                 "`/1up @user` - Give someone a 25-point boost\n"
                 "`/trick` - Perform a random skateboard trick\n"
+                "`/tricklist` - Show all available skateboarding tricks\n"
                 "`/skatefact` - Learn skateboarding facts\n"
-                "`/ping` - Test bot responsiveness\n"
+                "`/skatehistory` - Learn about skateboarding history\n"
+                "`/brand` - Learn about skateboard brand history\n"
+                "`/skater` - Learn about legendary skaters\n"
+                "`/crew` - Learn about legendary skate crews\n"
+                "`/daily` - Check when daily missions reset\n"
+                "`/weekly` - Check when weekly missions reset\n"
                 "`/help` - Show this help message"
             ),
             inline=False
@@ -281,7 +288,12 @@ class AdminCommands(commands.Cog):
                 value=(
                     "`/say [#channel] <message>` - Make bot send messages\n"
                     "`/announce [#channel] <message>` - Skateboard-themed announcements\n"
-                    "`/embed [#channel] [title] <description>` - Custom embed messages"
+                    "`/embed [#channel] [title] <description>` - Custom embed messages\n"
+                    "`/slowmode @user <seconds>` - Set personal slowmode for a user\n"
+                    "`/slowmode_list` - List all active personal slowmodes\n"
+                    "`/slowmode_remove @user` - Remove personal slowmode\n"
+                    "`/reactionroles [#channel]` - Create reaction role messages\n"
+                    "`/reactionroles_manage` - Edit or remove existing reaction role messages"
                 ),
                 inline=False
             )
@@ -292,6 +304,12 @@ class AdminCommands(commands.Cog):
                 name="🛡️ **Administrator Commands** (Admin Only)",
                 value=(
                     "`/setup` - Interactive bot configuration\n"
+                    "`/setup_edit` - Edit specific bot settings\n"
+                    "`/setup_reset` - Reset bot configuration\n"
+                    "`/setup_status` - Check current bot configuration\n"
+                    "`/welcome_config` - Configure custom welcome messages\n"
+                    "`/welcome_set_message` - Set custom welcome message template\n"
+                    "`/welcome_settings` - Adjust welcome message display settings\n"
                     "`!set_rank @user <rank>` - Manually set user ranks (1-15)\n"
                     "`!commands` - Show legacy command help"
                 ),
@@ -303,6 +321,8 @@ class AdminCommands(commands.Cog):
             embed.add_field(
                 name="👑 **Bot Owner Commands** (Global)",
                 value=(
+                    "`/ping` - Test bot latency and responsiveness\n"
+                    "`/status` - Show bot health and system statistics\n"
                     "`!sync` - Sync slash commands globally\n"
                     "`!check_commands` - Debug command registration"
                 ),

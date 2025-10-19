@@ -403,7 +403,13 @@ async def cache_stats(ctx):
 
 @bot.tree.command(name="ping", description="Test bot latency and API response time")
 async def ping_test(interaction: discord.Interaction):
-    """Test bot latency and API response time"""
+    """Test bot latency and API response time - Owner only"""
+    
+    # Check if user is bot owner
+    if interaction.user.id != 398186211387842560:  # Your Discord user ID
+        await interaction.response.send_message("❌ This command is restricted to the bot owner.", ephemeral=True)
+        return
+    
     import time
     
     # Calculate bot latency (time to process command)
