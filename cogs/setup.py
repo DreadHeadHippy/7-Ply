@@ -191,6 +191,58 @@ class SetupSystem(commands.Cog):
         )
         
         await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @app_commands.command(name='setup_edit', description='Edit specific bot settings without resetting everything')
+    @app_commands.default_permissions(administrator=True)
+    async def setup_edit(self, interaction: discord.Interaction):
+        """Edit specific settings with interactive dropdowns"""
+        
+        guild = interaction.guild
+        if not guild:
+            await interaction.response.send_message("❌ This command can only be used in a server!", ephemeral=True)
+            return
+        
+        config = self.get_server_config(guild.id)
+        
+        # Check if setup has been completed
+        if not config.get("setup_completed"):
+            embed = discord.Embed(
+                title="❌ Setup Not Complete",
+                description="You need to run `/setup` first before you can edit settings!",
+                color=0xff0000
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+        
+        # Create edit selection embed
+        embed = discord.Embed(
+            title="🔧 Edit Bot Settings",
+            description="Choose what you'd like to modify:",
+            color=0x00ff88
+        )
+        
+        # Show current configuration status
+        ranking_channel = f"<#{config.get('ranking_channel_id')}>" if config.get('ranking_channel_id') else "Not set"
+        welcome_status = "✅ Enabled" if config.get('features', {}).get('welcome_messages') else "❌ Disabled"
+        suggestions_status = "✅ Enabled" if config.get('features', {}).get('suggestions') else "❌ Disabled"
+        temp_voice_status = "✅ Enabled" if config.get('features', {}).get('temp_voice') else "❌ Disabled"
+        
+        embed.add_field(
+            name="📊 Current Settings:",
+            value=f"🏆 **Ranking Channel**: {ranking_channel}\n💡 **Suggestions**: {suggestions_status}\n👋 **Welcome Messages**: {welcome_status}\n🔊 **Temp Voice**: {temp_voice_status}",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="💡 What can you edit?",
+            value="• Change channel assignments\n• Enable/disable features\n• Modify welcome message settings\n• Update any configuration without losing other settings",
+            inline=False
+        )
+        
+        # Create edit view with dropdown
+        view = SetupEditView(self, guild, config)
+        
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
     
     @app_commands.command(name='welcome_config', description='Configure custom welcome messages')
     @app_commands.default_permissions(administrator=True)
@@ -968,6 +1020,237 @@ class SetupView(discord.ui.View):
             
             await interaction.edit_original_response(embed=error_embed)
             print(f"Setup error for guild {self.guild.id}: {e}")
+
+class SetupEditView(discord.ui.View):
+    """Interactive view for editing specific bot settings"""
+    
+    def __init__(self, setup_cog: SetupSystem, guild: discord.Guild, config: dict):
+        super().__init__(timeout=300)  # 5 minute timeout
+        self.setup_cog = setup_cog
+        self.guild = guild
+        self.config = config
+    
+    @discord.ui.select(
+        placeholder="🔧 Choose what to edit...",
+        options=[
+            discord.SelectOption(
+                label="🏆 Ranking Channel",
+                description="Change which channel displays rank updates",
+                value="ranking_channel"
+            ),
+            discord.SelectOption(
+                label="💡 Suggestions System",
+                description="Enable/disable or change suggestions channel",
+                value="suggestions_feature"
+            ),
+            discord.SelectOption(
+                label="👋 Welcome Messages", 
+                description="Enable/disable or configure welcome settings",
+                value="welcome_feature"
+            ),
+            discord.SelectOption(
+                label="🔊 Temp Voice Channels",
+                description="Enable/disable temporary voice channels",
+                value="temp_voice_feature"
+            )
+        ]
+    )
+    async def edit_select(self, interaction: discord.Interaction, select: discord.ui.Select):
+        """Handle selection of what to edit"""
+        
+        if select.values[0] == "ranking_channel":
+            await self.edit_ranking_channel(interaction)
+        elif select.values[0] == "suggestions_feature":
+            await self.edit_suggestions_feature(interaction)
+        elif select.values[0] == "welcome_feature":
+            await self.edit_welcome_feature(interaction)
+        elif select.values[0] == "temp_voice_feature":
+            await self.edit_temp_voice_feature(interaction)
+    
+    async def edit_ranking_channel(self, interaction: discord.Interaction):
+        """Edit ranking channel with channel selector"""
+        
+        # Get all text channels
+        text_channels = [ch for ch in self.guild.text_channels if ch.permissions_for(self.guild.me).send_messages]
+        
+        if not text_channels:
+            await interaction.response.send_message(
+                "❌ No available text channels found! Make sure the bot has send message permissions.",
+                ephemeral=True
+            )
+            return
+        
+        # Create channel selection dropdown
+        channel_options = []
+        for channel in text_channels[:25]:  # Discord limit of 25 options
+            current = " (Current)" if self.config.get('ranking_channel_id') == channel.id else ""
+            channel_options.append(
+                discord.SelectOption(
+                    label=f"#{channel.name}{current}",
+                    description=f"Set ranking channel to #{channel.name}",
+                    value=str(channel.id)
+                )
+            )
+        
+        class ChannelSelectView(discord.ui.View):
+            def __init__(self, setup_cog, guild):
+                super().__init__(timeout=60)
+                self.setup_cog = setup_cog
+                self.guild = guild
+            
+            @discord.ui.select(placeholder="🏆 Choose new ranking channel...", options=channel_options)
+            async def channel_select(self, interaction: discord.Interaction, select: discord.ui.Select):
+                new_channel_id = int(select.values[0])
+                new_channel = self.guild.get_channel(new_channel_id)
+                
+                # Update config
+                config = self.setup_cog.get_server_config(self.guild.id)
+                config['ranking_channel_id'] = new_channel_id
+                self.setup_cog.save_configs()
+                
+                embed = discord.Embed(
+                    title="✅ Ranking Channel Updated!",
+                    description=f"Ranking channel changed to {new_channel.mention}",
+                    color=0x00ff88
+                )
+                
+                await interaction.response.edit_message(embed=embed, view=None)
+        
+        embed = discord.Embed(
+            title="🏆 Change Ranking Channel",
+            description="Select a new channel for ranking displays:",
+            color=0x00ff88
+        )
+        
+        channel_view = ChannelSelectView(self.setup_cog, self.guild)
+        await interaction.response.edit_message(embed=embed, view=channel_view)
+    
+    async def edit_suggestions_feature(self, interaction: discord.Interaction):
+        """Toggle suggestions feature"""
+        
+        current_enabled = self.config.get('features', {}).get('suggestions', False)
+        
+        class SuggestionsToggleView(discord.ui.View):
+            def __init__(self, setup_cog, guild):
+                super().__init__(timeout=60)
+                self.setup_cog = setup_cog
+                self.guild = guild
+            
+            @discord.ui.button(label="✅ Enable Suggestions" if not current_enabled else "❌ Disable Suggestions", 
+                             style=discord.ButtonStyle.green if not current_enabled else discord.ButtonStyle.red)
+            async def toggle_suggestions(self, interaction: discord.Interaction, button: discord.ui.Button):
+                config = self.setup_cog.get_server_config(self.guild.id)
+                
+                if not config.get('features'):
+                    config['features'] = {}
+                
+                config['features']['suggestions'] = not current_enabled
+                self.setup_cog.save_configs()
+                
+                status = "enabled" if not current_enabled else "disabled"
+                embed = discord.Embed(
+                    title=f"✅ Suggestions {status.title()}!",
+                    description=f"Suggestions system has been {status}.",
+                    color=0x00ff88 if not current_enabled else 0xff6600
+                )
+                
+                await interaction.response.edit_message(embed=embed, view=None)
+        
+        embed = discord.Embed(
+            title="💡 Edit Suggestions Feature",
+            description=f"Suggestions are currently: **{'Enabled' if current_enabled else 'Disabled'}**",
+            color=0x00ff88
+        )
+        
+        toggle_view = SuggestionsToggleView(self.setup_cog, self.guild)
+        await interaction.response.edit_message(embed=embed, view=toggle_view)
+    
+    async def edit_welcome_feature(self, interaction: discord.Interaction):
+        """Toggle welcome messages feature"""
+        
+        current_enabled = self.config.get('features', {}).get('welcome_messages', False)
+        
+        class WelcomeToggleView(discord.ui.View):
+            def __init__(self, setup_cog, guild):
+                super().__init__(timeout=60)
+                self.setup_cog = setup_cog
+                self.guild = guild
+            
+            @discord.ui.button(label="✅ Enable Welcome Messages" if not current_enabled else "❌ Disable Welcome Messages",
+                             style=discord.ButtonStyle.green if not current_enabled else discord.ButtonStyle.red)
+            async def toggle_welcome(self, interaction: discord.Interaction, button: discord.ui.Button):
+                config = self.setup_cog.get_server_config(self.guild.id)
+                
+                if not config.get('features'):
+                    config['features'] = {}
+                
+                config['features']['welcome_messages'] = not current_enabled
+                self.setup_cog.save_configs()
+                
+                status = "enabled" if not current_enabled else "disabled"
+                embed = discord.Embed(
+                    title=f"✅ Welcome Messages {status.title()}!",
+                    description=f"Welcome messages have been {status}.",
+                    color=0x00ff88 if not current_enabled else 0xff6600
+                )
+                
+                if not current_enabled:
+                    embed.add_field(
+                        name="💡 Next Steps:",
+                        value="Use `/welcome_config` to customize your welcome messages!",
+                        inline=False
+                    )
+                
+                await interaction.response.edit_message(embed=embed, view=None)
+        
+        embed = discord.Embed(
+            title="👋 Edit Welcome Messages",
+            description=f"Welcome messages are currently: **{'Enabled' if current_enabled else 'Disabled'}**",
+            color=0x00ff88
+        )
+        
+        toggle_view = WelcomeToggleView(self.setup_cog, self.guild)
+        await interaction.response.edit_message(embed=embed, view=toggle_view)
+    
+    async def edit_temp_voice_feature(self, interaction: discord.Interaction):
+        """Toggle temp voice channels feature"""
+        
+        current_enabled = self.config.get('features', {}).get('temp_voice', False)
+        
+        class TempVoiceToggleView(discord.ui.View):
+            def __init__(self, setup_cog, guild):
+                super().__init__(timeout=60)
+                self.setup_cog = setup_cog
+                self.guild = guild
+            
+            @discord.ui.button(label="✅ Enable Temp Voice" if not current_enabled else "❌ Disable Temp Voice",
+                             style=discord.ButtonStyle.green if not current_enabled else discord.ButtonStyle.red)
+            async def toggle_temp_voice(self, interaction: discord.Interaction, button: discord.ui.Button):
+                config = self.setup_cog.get_server_config(self.guild.id)
+                
+                if not config.get('features'):
+                    config['features'] = {}
+                
+                config['features']['temp_voice'] = not current_enabled
+                self.setup_cog.save_configs()
+                
+                status = "enabled" if not current_enabled else "disabled"
+                embed = discord.Embed(
+                    title=f"✅ Temp Voice {status.title()}!",
+                    description=f"Temporary voice channels have been {status}.",
+                    color=0x00ff88 if not current_enabled else 0xff6600
+                )
+                
+                await interaction.response.edit_message(embed=embed, view=None)
+        
+        embed = discord.Embed(
+            title="🔊 Edit Temp Voice Channels",
+            description=f"Temp voice channels are currently: **{'Enabled' if current_enabled else 'Disabled'}**",
+            color=0x00ff88
+        )
+        
+        toggle_view = TempVoiceToggleView(self.setup_cog, self.guild)
+        await interaction.response.edit_message(embed=embed, view=toggle_view)
 
 async def setup(bot):
     await bot.add_cog(SetupSystem(bot))
