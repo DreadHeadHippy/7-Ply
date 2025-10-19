@@ -20,6 +20,7 @@ A **premium Discord bot** for skateboarding communities! Features a comprehensiv
 
 ### 👥 **Community Features** (Optional)
 - **Interactive Setup**: Choose which features you want during `/setup`
+- **Reaction Roles**: Skateboard-themed self-serve roles (`/reactionroles`)
 - **Custom Welcome System**: Fully configurable welcome messages with templates (optional)
 - **Suggestions System**: Community-driven feature requests with voting (optional)
 - **Temporary Voice Channels**: User-controlled voice rooms (optional)
@@ -121,10 +122,12 @@ Choose which features you want:
 - `/welcome_settings` - Configure welcome message display options
 - `!set_rank @user <rank>` - Manually set user ranks 1-15 (Admin only)
 
-### **�️ Moderation Tools** (Manage Messages)
+### **🛠️ Moderation Tools** (Manage Messages)
 - `/say [#channel] <message>` - Make bot send messages
 - `/announce [#channel] <message>` - Skateboard-themed announcements  
 - `/embed [#channel] [title] <description>` - Custom embed messages
+- `/reactionroles [#channel]` - Create reaction role messages (default skateboard themes or fully customizable)
+- `/reactionroles_manage` - Edit, delete, or view existing reaction role messages
 
 ### **👥 Community Features** (Optional - Configure via `/setup`)
 - **Custom Welcome Messages**: Fully configurable templates with variables (optional)

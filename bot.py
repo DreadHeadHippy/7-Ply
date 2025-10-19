@@ -1,3 +1,4 @@
+from typing import Optional
 import os
 import discord
 from discord.ext import commands
@@ -5,6 +6,7 @@ from dotenv import load_dotenv
 import time
 from collections import defaultdict
 from utils.cache import bot_cache
+from utils.security import SecurityValidator
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -18,15 +20,23 @@ intents.members = True
 
 bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
+# Track bot start time for uptime calculation
+bot_start_time = None
+
 # Smart rate limiting - prevents individual spam, not bot-wide limits
 user_command_usage = defaultdict(list)
 suspicious_users = defaultdict(int)  # Track repeated violations
 
-def check_rate_limit(user_id: int, command_name: str = "general") -> tuple[bool, str]:
+def check_rate_limit(user_id: int, command_name: str = "general", interaction: Optional[discord.Interaction] = None) -> tuple[bool, str]:
     """
     Smart rate limiting that targets individual abusers, not legitimate users
+    Admins and moderators bypass rate limits entirely
     Returns: (allowed, reason_if_denied)
     """
+    # Bypass rate limits for privileged users (admins/mods)
+    if interaction and SecurityValidator.is_privileged_user(interaction):
+        return True, ""
+    
     current_time = time.time()
     user_commands = user_command_usage[user_id]
     
@@ -72,9 +82,114 @@ async def cleanup_rate_limit_data():
             if suspicious_users[user_id] == 0:
                 del suspicious_users[user_id]
 
+async def validate_server_configurations():
+    """Validate server configurations and provide helpful warnings"""
+    validation_issues = []
+    
+    for guild in bot.guilds:
+        guild_issues = []
+        
+        try:
+            # Check if bot has essential permissions
+            if not bot.user:
+                continue
+                
+            bot_member = guild.get_member(bot.user.id)
+            if not bot_member:
+                continue
+            
+            permissions = bot_member.guild_permissions
+            
+            # Critical permissions check
+            critical_perms = {
+                'send_messages': 'Cannot send messages',
+                'embed_links': 'Cannot send embeds (commands will fail)',
+                'manage_messages': 'Cannot delete messages (slowmode won\'t work)',
+                'read_message_history': 'Cannot read message history'
+            }
+            
+            missing_critical = []
+            for perm, description in critical_perms.items():
+                if not getattr(permissions, perm, False):
+                    missing_critical.append(f"❌ {description}")
+            
+            if missing_critical:
+                guild_issues.extend(missing_critical)
+            
+            # Check for recommended permissions
+            recommended_perms = {
+                'manage_channels': 'Cannot create temporary voice channels',
+                'manage_roles': 'Cannot manage user roles',
+                'kick_members': 'Cannot use moderation features'
+            }
+            
+            missing_recommended = []
+            for perm, description in recommended_perms.items():
+                if not getattr(permissions, perm, False):
+                    missing_recommended.append(f"⚠️ {description}")
+            
+            # Only add to issues if there are critical problems
+            if missing_critical:
+                guild_issues.extend(missing_recommended)
+            
+            # Check if server has setup data
+            server_data_file = f"data/servers/{guild.id}.json"
+            import os
+            if not os.path.exists(server_data_file):
+                guild_issues.append("💡 Server not configured - run /setup to get started")
+            else:
+                # Validate setup data exists and is readable
+                try:
+                    import json
+                    with open(server_data_file, 'r') as f:
+                        data = json.load(f)
+                    
+                    # Check for essential configuration
+                    if not data.get('general_channel'):
+                        guild_issues.append("⚠️ No general channel configured")
+                    
+                    if not data.get('admin_role'):
+                        guild_issues.append("💡 No admin role configured")
+                        
+                except (json.JSONDecodeError, FileNotFoundError):
+                    guild_issues.append("❌ Server configuration file is corrupted")
+            
+            if guild_issues:
+                validation_issues.append({
+                    'guild_name': guild.name,
+                    'guild_id': guild.id,
+                    'issues': guild_issues
+                })
+                
+        except Exception as e:
+            validation_issues.append({
+                'guild_name': guild.name,
+                'guild_id': guild.id,
+                'issues': [f"❌ Error checking configuration: {str(e)}"]
+            })
+    
+    # Report validation results
+    if validation_issues:
+        print("\n🔍 Server Configuration Validation Results:")
+        print("=" * 50)
+        
+        for server in validation_issues:
+            print(f"\n📍 {server['guild_name']} (ID: {server['guild_id']}):")
+            for issue in server['issues']:
+                print(f"   {issue}")
+        
+        print(f"\n💡 Found issues in {len(validation_issues)} server(s). Use /setup in each server to configure properly.")
+        print("=" * 50)
+    else:
+        print("✅ All server configurations look good!")
+
 @bot.event
 async def on_ready():
+    global bot_start_time
     print(f"🛹 7-Ply is online as {bot.user}!")
+    
+    # Record start time for uptime tracking
+    bot_start_time = time.time()
     
     # Set activity status
     activity = discord.Activity(
@@ -84,7 +199,12 @@ async def on_ready():
     await bot.change_presence(activity=activity)
     
     # Start background cleanup task
+    # Start background cleanup tasks
     bot.loop.create_task(background_cleanup())
+    bot.loop.create_task(hourly_deep_cleanup())
+    
+    # Validate server configurations
+    await validate_server_configurations()
     
     # Show what commands are registered
     commands_list = [cmd.name for cmd in bot.tree.get_commands()]
@@ -104,14 +224,60 @@ async def on_ready():
         print("💡 Use !check_commands to see registered commands or !sync to force sync")
 
 async def background_cleanup():
-    """Background task to clean up rate limiting data"""
+    """Background task to clean up rate limiting data and cache"""
     import asyncio
     while True:
         await asyncio.sleep(300)  # Clean up every 5 minutes
         try:
+            # Clean up rate limiting data
             await cleanup_rate_limit_data()
+            
+            # Clean up expired cache entries
+            cleaned_entries = bot_cache.cleanup_expired()
+            if cleaned_entries > 0:
+                print(f"🧹 Cache cleanup: removed {cleaned_entries} expired entries")
         except Exception as e:
             print(f"Error in cleanup task: {e}")
+
+async def hourly_deep_cleanup():
+    """Deep cleanup task that runs every hour for memory optimization"""
+    import asyncio
+    while True:
+        await asyncio.sleep(3600)  # Run every hour
+        try:
+            # Get stats before cleanup
+            stats_before = bot_cache.get_cache_stats()
+            
+            # Force cleanup of old cache entries (more aggressive)
+            bot_cache._cleanup_old_user_data()
+            bot_cache._cleanup_old_server_data()
+            
+            # Clean up admin command cooldowns older than 1 hour
+            current_time = time.time()
+            try:
+                admin_cog = bot.get_cog('AdminCog')
+                if admin_cog:
+                    cooldowns = getattr(admin_cog, 'command_cooldowns', {})
+                    if cooldowns:
+                        expired_cooldowns = [
+                            key for key, timestamp in cooldowns.items()
+                            if current_time - timestamp > 3600  # 1 hour old
+                        ]
+                        for key in expired_cooldowns:
+                            del cooldowns[key]
+                        
+                        if expired_cooldowns:
+                            print(f"🕒 Cleaned {len(expired_cooldowns)} old admin command cooldowns")
+            except Exception:
+                pass  # Skip if admin cog not found or doesn't have cooldowns
+            
+            stats_after = bot_cache.get_cache_stats()
+            memory_saved = stats_before['memory_estimate_mb'] - stats_after['memory_estimate_mb']
+            
+            print(f"🧽 Deep cleanup completed: {memory_saved:.2f}MB memory optimized")
+            
+        except Exception as e:
+            print(f"Error in deep cleanup task: {e}")
 
 # Diagnostic commands to help troubleshoot
 @bot.command(name='sync')

@@ -20,11 +20,15 @@ class AdminCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.command_cooldowns = {}  # Store last use times
-        self.user_slowmodes = {}  # Store per-user slowmode settings {guild_id: {user_id: slowmode_seconds}}
+        self.user_slowmodes = {}  # Store per-user slowmode settings {guild_id: {user_id: {'duration': seconds, 'expires_at': timestamp}}}
         self.user_last_message = {}  # Track last message times {guild_id: {user_id: timestamp}}
     
-    def check_cooldown(self, user_id: int, command_name: str, cooldown_seconds: int = 5) -> bool:
-        """Check if user is on cooldown for a command"""
+    def check_cooldown(self, user_id: int, command_name: str, cooldown_seconds: int = 5, interaction: Optional[discord.Interaction] = None) -> bool:
+        """Check if user is on cooldown for a command. Admins/mods bypass cooldowns."""
+        # Bypass cooldowns for privileged users (admins/mods)
+        if interaction and SecurityValidator.is_privileged_user(interaction):
+            return True
+        
         key = f"{user_id}_{command_name}"
         current_time = time.time()
         
@@ -36,13 +40,39 @@ class AdminCommands(commands.Cog):
         self.command_cooldowns[key] = current_time
         return True
 
+    def cleanup_expired_slowmodes(self, guild_id: int):
+        """Remove expired slowmodes for a guild"""
+        if guild_id not in self.user_slowmodes:
+            return
+        
+        current_time = time.time()
+        expired_users = []
+        
+        for user_id, slowmode_data in self.user_slowmodes[guild_id].items():
+            if current_time >= slowmode_data['expires_at']:
+                expired_users.append(user_id)
+        
+        # Remove expired slowmodes
+        for user_id in expired_users:
+            del self.user_slowmodes[guild_id][user_id]
+    
+    def is_user_slowmoded(self, guild_id: int, user_id: int) -> tuple[bool, int]:
+        """Check if user is slowmoded and return (is_slowmoded, duration_seconds)"""
+        self.cleanup_expired_slowmodes(guild_id)
+        
+        if (guild_id in self.user_slowmodes and 
+            user_id in self.user_slowmodes[guild_id]):
+            return True, self.user_slowmodes[guild_id][user_id]['duration']
+        
+        return False, 0
+
     @app_commands.command(name='say', description='Make the bot say something')
     @app_commands.default_permissions(manage_messages=True)
     async def say(self, interaction: discord.Interaction, channel: Optional[discord.TextChannel] = None, *, message: str):
         """Make the bot say something in a specific channel or current channel"""
         
         # Rate limiting (5 second cooldown)
-        if not self.check_cooldown(interaction.user.id, "say", 5):
+        if not self.check_cooldown(interaction.user.id, "say", 5, interaction):
             await interaction.response.send_message(
                 SecureError.rate_limit_error(5),
                 ephemeral=True
@@ -98,7 +128,7 @@ class AdminCommands(commands.Cog):
         """Make a skateboard-themed announcement"""
         
         # Rate limiting (10 second cooldown for announces)
-        if not self.check_cooldown(interaction.user.id, "announce", 10):
+        if not self.check_cooldown(interaction.user.id, "announce", 10, interaction):
             await interaction.response.send_message(
                 SecureError.rate_limit_error(10),
                 ephemeral=True
@@ -160,7 +190,7 @@ class AdminCommands(commands.Cog):
         """Send a custom embed message"""
         
         # Rate limiting (15 second cooldown for embeds)
-        if not self.check_cooldown(interaction.user.id, "embed", 15):
+        if not self.check_cooldown(interaction.user.id, "embed", 15, interaction):
             await interaction.response.send_message(
                 SecureError.rate_limit_error(15),
                 ephemeral=True
@@ -350,6 +380,235 @@ class AdminCommands(commands.Cog):
         
         await ctx.send(embed=embed)
 
+    @app_commands.command(name='slowmode_list', description='List all active personal slowmodes')
+    @app_commands.default_permissions(manage_messages=True)
+    async def slowmode_list(self, interaction: discord.Interaction):
+        """List all active personal slowmodes in the server"""
+        if not interaction.guild:
+            await interaction.response.send_message("❌ This command can only be used in a server!", ephemeral=True)
+            return
+        
+        guild_id = str(interaction.guild.id)
+        
+        # Clean up expired slowmodes first
+        self.cleanup_expired_slowmodes(interaction.guild.id)
+        
+        if (guild_id not in self.user_slowmodes or 
+            not self.user_slowmodes[guild_id]):
+            await interaction.response.send_message("✅ No active personal slowmodes in this server", ephemeral=True)
+            return
+        
+        embed = discord.Embed(
+            title="📋 Active Personal Slowmodes",
+            color=discord.Color.blue(),
+            timestamp=interaction.created_at
+        )
+        
+        current_time = time.time()
+        slowmode_info = []
+        
+        for user_id, slowmode_data in self.user_slowmodes[guild_id].items():
+            # Get user
+            try:
+                user = await self.bot.fetch_user(int(user_id))
+                user_name = f"{user.display_name} ({user.name})"
+            except:
+                user_name = f"Unknown User (ID: {user_id})"
+            
+            # Calculate time remaining
+            time_remaining = slowmode_data['expires_at'] - current_time
+            if time_remaining > 0:
+                hours = int(time_remaining // 3600)
+                minutes = int((time_remaining % 3600) // 60)
+                seconds = int(time_remaining % 60)
+                
+                if hours > 0:
+                    time_str = f"{hours}h {minutes}m {seconds}s"
+                elif minutes > 0:
+                    time_str = f"{minutes}m {seconds}s"
+                else:
+                    time_str = f"{seconds}s"
+                
+                slowmode_info.append(
+                    f"👤 **{user_name}**\n"
+                    f"⏱️ Cooldown: {slowmode_data['duration']}s\n"
+                    f"⏰ Expires in: {time_str}\n"
+                )
+        
+        if not slowmode_info:
+            await interaction.response.send_message("✅ No active personal slowmodes in this server", ephemeral=True)
+            return
+        
+        # Split into chunks if too long
+        description = "\n".join(slowmode_info)
+        if len(description) > 4096:
+            # Split the list if it's too long
+            embed.description = description[:4000] + "\n... (list truncated)"
+        else:
+            embed.description = description
+        
+        embed.set_footer(text=f"Total: {len(slowmode_info)} active slowmodes")
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @app_commands.command(name='slowmode_remove', description='Remove personal slowmode from a user')
+    @app_commands.default_permissions(manage_messages=True)
+    async def slowmode_remove(self, interaction: discord.Interaction, user: discord.Member):
+        """Remove personal slowmode from a specific user"""
+        if not interaction.guild:
+            await interaction.response.send_message("❌ This command can only be used in a server!", ephemeral=True)
+            return
+        
+        guild_id = str(interaction.guild.id)
+        user_id = str(user.id)
+        
+        # Check if user has slowmode
+        if (guild_id not in self.user_slowmodes or 
+            user_id not in self.user_slowmodes[guild_id]):
+            await interaction.response.send_message(
+                f"❌ {user.mention} doesn't have a personal slowmode active.", 
+                ephemeral=True
+            )
+            return
+        
+        # Remove the slowmode
+        del self.user_slowmodes[guild_id][user_id]
+        
+        # Clean up empty guild entry
+        if not self.user_slowmodes[guild_id]:
+            del self.user_slowmodes[guild_id]
+        
+        # Also remove from last message tracking
+        if (guild_id in self.user_last_message and 
+            user_id in self.user_last_message[guild_id]):
+            del self.user_last_message[guild_id][user_id]
+        
+        embed = discord.Embed(
+            title="✅ Slowmode Removed",
+            description=f"Personal slowmode has been removed from {user.mention}",
+            color=discord.Color.green(),
+            timestamp=interaction.created_at
+        )
+        
+        embed.add_field(
+            name="Moderator",
+            value=interaction.user.mention,
+            inline=True
+        )
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    @app_commands.command(name='bot_status', description='Show bot health and system statistics')
+    async def bot_status(self, interaction: discord.Interaction):
+        """Show comprehensive bot status and health metrics - Owner only"""
+        # Check if user is bot owner
+        if not await self.bot.is_owner(interaction.user):
+            await interaction.response.send_message("❌ This command is restricted to the bot owner.", ephemeral=True)
+            return
+        
+        current_time = time.time()
+        
+        # Only show server-specific stats if in a server
+        guild_id = str(interaction.guild.id) if interaction.guild else None
+        active_slowmodes = 0
+        
+        if guild_id and interaction.guild:
+            # Clean up expired slowmodes first
+            self.cleanup_expired_slowmodes(interaction.guild.id)
+            active_slowmodes = len(self.user_slowmodes.get(guild_id, {}))
+        
+        # Calculate statistics
+        total_servers = len(self.bot.guilds)
+        total_users = sum(guild.member_count for guild in self.bot.guilds if guild.member_count)
+        
+        # Slowmode stats across all servers
+        total_slowmodes_all_servers = sum(len(slowmodes) for slowmodes in self.user_slowmodes.values())
+        
+        # Cache stats (if cache exists)
+        cache_stats = "N/A"
+        if hasattr(self.bot, 'cache'):
+            try:
+                cache = self.bot.cache
+                cache_size = len(cache.user_cache) + len(cache.server_cache)
+                cache_stats = f"{cache_size} entries"
+            except:
+                cache_stats = "Cache module not loaded"
+        
+        # Memory usage (basic)
+        import sys
+        memory_usage = f"{sys.getsizeof(self.user_slowmodes) + sys.getsizeof(self.user_last_message)} bytes"
+        
+        # Bot uptime
+        from bot import bot_start_time
+        uptime_seconds = current_time - bot_start_time if bot_start_time else 0
+        uptime_hours = int(uptime_seconds // 3600)
+        uptime_minutes = int((uptime_seconds % 3600) // 60)
+        
+        embed = discord.Embed(
+            title="🤖 Bot Status & Health Check",
+            color=discord.Color.blue(),
+            timestamp=interaction.created_at
+        )
+        
+        # System Stats
+        embed.add_field(
+            name="📊 System Statistics",
+            value=f"**Servers:** {total_servers}\n"
+                  f"**Total Users:** {total_users:,}\n"
+                  f"**Uptime:** {uptime_hours}h {uptime_minutes}m\n"
+                  f"**Ping:** {round(self.bot.latency * 1000)}ms",
+            inline=True
+        )
+        
+        # Cache & Memory
+        embed.add_field(
+            name="💾 Performance",
+            value=f"**Cache:** {cache_stats}\n"
+                  f"**Memory:** {memory_usage}\n"
+                  f"**Rate Limits:** Active\n"
+                  f"**Auto-cleanup:** Enabled",
+            inline=True
+        )
+        
+        # Moderation Stats
+        moderation_value = f"**Total Slowmodes (All Servers):** {total_slowmodes_all_servers}\n"
+        if guild_id:
+            moderation_value = f"**Active Slowmodes (This Server):** {active_slowmodes}\n" + moderation_value
+        
+        moderation_value += f"**Auto-expire:** Enabled\n**Permission Checks:** Active"
+        
+        embed.add_field(
+            name="🛡️ Moderation",
+            value=moderation_value,
+            inline=True
+        )
+        
+        # Add server-specific slowmode details if any exist and we're in a server
+        if guild_id and active_slowmodes > 0:
+            slowmode_details = []
+            for user_id, slowmode_data in self.user_slowmodes[guild_id].items():
+                time_remaining = slowmode_data['expires_at'] - current_time
+                if time_remaining > 0:
+                    try:
+                        user = await self.bot.fetch_user(int(user_id))
+                        name = user.display_name
+                    except:
+                        name = f"ID:{user_id}"
+                    
+                    minutes_left = int(time_remaining // 60)
+                    slowmode_details.append(f"• {name}: {minutes_left}m left")
+            
+            if slowmode_details and len(slowmode_details) <= 5:  # Only show if 5 or fewer
+                embed.add_field(
+                    name="⏱️ Active Slowmodes",
+                    value="\n".join(slowmode_details),
+                    inline=False
+                )
+        
+        embed.set_footer(text="🛹 7-Ply Bot • All systems operational")
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
     @app_commands.command(name='slowmode', description='Set personal slowmode for a user')
     @app_commands.default_permissions(manage_messages=True)
     async def user_slowmode(self, interaction: discord.Interaction, user: discord.Member, duration: str):
@@ -395,7 +654,12 @@ class AdminCommands(commands.Cog):
             
             # Set or remove slowmode
             if slowmode_seconds > 0:
-                self.user_slowmodes[guild_id][user.id] = slowmode_seconds
+                # Calculate expiration time (current time + duration)
+                expires_at = time.time() + slowmode_seconds
+                self.user_slowmodes[guild_id][user.id] = {
+                    'duration': slowmode_seconds,
+                    'expires_at': expires_at
+                }
             else:
                 self.user_slowmodes[guild_id].pop(user.id, None)
             
@@ -453,10 +717,9 @@ class AdminCommands(commands.Cog):
         user_id = message.author.id
         
         # Check if user has personal slowmode
-        if (guild_id in self.user_slowmodes and 
-            user_id in self.user_slowmodes[guild_id]):
-            
-            slowmode_seconds = self.user_slowmodes[guild_id][user_id]
+        is_slowmoded, slowmode_seconds = self.is_user_slowmoded(guild_id, user_id)
+        
+        if is_slowmoded:
             current_time = time.time()
             
             # Initialize guild tracking if needed

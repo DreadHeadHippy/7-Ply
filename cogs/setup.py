@@ -63,7 +63,8 @@ class SetupSystem(commands.Cog):
                     "ranking_system": True,      # Core feature - always enabled
                     "suggestions_system": False, # Optional
                     "welcome_messages": False,   # Optional
-                    "temp_voice": False         # Optional
+                    "temp_voice": False,         # Optional
+                    "reaction_roles": False      # Optional
                 },
                 "welcome_config": {
                     "custom_message": None,      # Custom welcome message template
@@ -134,7 +135,7 @@ class SetupSystem(commands.Cog):
         
         embed.add_field(
             name="🎯 Available Features:",
-            value="🏆 **Ranking System** - User progression and points (Always included)\n💡 **Suggestions System** - Community feedback with voting\n👋 **Welcome Messages** - Greet new members\n🔊 **Temp Voice Channels** - User-managed voice rooms",
+            value="🏆 **Ranking System** - User progression and points (Always included)\n💡 **Suggestions System** - Community feedback with voting\n👋 **Welcome Messages** - Greet new members\n🔊 **Temp Voice Channels** - User-managed voice rooms\n🎭 **Reaction Roles** - Self-serve skateboard-themed roles",
             inline=False
         )
         
@@ -226,10 +227,11 @@ class SetupSystem(commands.Cog):
         welcome_status = "✅ Enabled" if config.get('features', {}).get('welcome_messages') else "❌ Disabled"
         suggestions_status = "✅ Enabled" if config.get('features', {}).get('suggestions') else "❌ Disabled"
         temp_voice_status = "✅ Enabled" if config.get('features', {}).get('temp_voice') else "❌ Disabled"
+        reaction_roles_status = "✅ Enabled" if config.get('features', {}).get('reaction_roles') else "❌ Disabled"
         
         embed.add_field(
             name="📊 Current Settings:",
-            value=f"🏆 **Ranking Channel**: {ranking_channel}\n💡 **Suggestions**: {suggestions_status}\n👋 **Welcome Messages**: {welcome_status}\n🔊 **Temp Voice**: {temp_voice_status}",
+            value=f"🏆 **Ranking Channel**: {ranking_channel}\n💡 **Suggestions**: {suggestions_status}\n👋 **Welcome Messages**: {welcome_status}\n🔊 **Temp Voice**: {temp_voice_status}\n🎭 **Reaction Roles**: {reaction_roles_status}",
             inline=False
         )
         
@@ -496,6 +498,15 @@ class FeatureSelectView(discord.ui.View):
         voice_button.callback = self.toggle_voice
         self.add_item(voice_button)
         
+        # Reaction Roles
+        reaction_roles_button = discord.ui.Button(
+            label="🎭 Reaction Roles",
+            style=discord.ButtonStyle.secondary,
+            custom_id="toggle_reaction_roles"
+        )
+        reaction_roles_button.callback = self.toggle_reaction_roles
+        self.add_item(reaction_roles_button)
+        
         # Proceed button
         proceed_button = discord.ui.Button(
             label="🚀 Proceed with Setup",
@@ -532,6 +543,15 @@ class FeatureSelectView(discord.ui.View):
         self.selected_features["temp_voice"] = not current
         await self.update_display(interaction)
     
+    async def toggle_reaction_roles(self, interaction: discord.Interaction):
+        """Toggle reaction roles"""
+        if not await self.check_permissions(interaction):
+            return
+        
+        current = self.selected_features.get("reaction_roles", False)
+        self.selected_features["reaction_roles"] = not current
+        await self.update_display(interaction)
+    
     async def check_permissions(self, interaction: discord.Interaction) -> bool:
         """Check if user has permissions"""
         if not isinstance(interaction.user, discord.Member) or not interaction.user.guild_permissions.administrator:
@@ -561,9 +581,14 @@ class FeatureSelectView(discord.ui.View):
             feature_status += "👋 **Welcome Messages** ❌\n"
             
         if self.selected_features.get("temp_voice"):
-            feature_status += "🔊 **Temp Voice Channels** ✅"
+            feature_status += "🔊 **Temp Voice Channels** ✅\n"
         else:
-            feature_status += "🔊 **Temp Voice Channels** ❌"
+            feature_status += "🔊 **Temp Voice Channels** ❌\n"
+            
+        if self.selected_features.get("reaction_roles"):
+            feature_status += "🎭 **Reaction Roles** ✅"
+        else:
+            feature_status += "🎭 **Reaction Roles** ❌"
         
         embed.add_field(
             name="📋 Selected Features:",
@@ -1052,6 +1077,11 @@ class SetupEditView(discord.ui.View):
                 label="🔊 Temp Voice Channels",
                 description="Enable/disable temporary voice channels",
                 value="temp_voice_feature"
+            ),
+            discord.SelectOption(
+                label="🎭 Reaction Roles",
+                description="Enable/disable reaction role functionality",
+                value="reaction_roles_feature"
             )
         ]
     )
@@ -1066,6 +1096,8 @@ class SetupEditView(discord.ui.View):
             await self.edit_welcome_feature(interaction)
         elif select.values[0] == "temp_voice_feature":
             await self.edit_temp_voice_feature(interaction)
+        elif select.values[0] == "reaction_roles_feature":
+            await self.edit_reaction_roles_feature(interaction)
     
     async def edit_ranking_channel(self, interaction: discord.Interaction):
         """Edit ranking channel with channel selector"""
@@ -1250,6 +1282,49 @@ class SetupEditView(discord.ui.View):
         )
         
         toggle_view = TempVoiceToggleView(self.setup_cog, self.guild)
+        await interaction.response.edit_message(embed=embed, view=toggle_view)
+
+    async def edit_reaction_roles_feature(self, interaction: discord.Interaction):
+        """Toggle reaction roles feature"""
+        
+        current_enabled = self.config.get('features', {}).get('reaction_roles', False)
+        
+        class ReactionRolesToggleView(discord.ui.View):
+            def __init__(self, setup_cog, guild):
+                super().__init__(timeout=60)
+                self.setup_cog = setup_cog
+                self.guild = guild
+            
+            @discord.ui.button(label="✅ Enable Reaction Roles" if not current_enabled else "❌ Disable Reaction Roles",
+                             style=discord.ButtonStyle.green if not current_enabled else discord.ButtonStyle.red)
+            async def toggle_reaction_roles(self, interaction: discord.Interaction, button: discord.ui.Button):
+                config = self.setup_cog.get_server_config(self.guild.id)
+                
+                if not config.get('features'):
+                    config['features'] = {}
+                
+                config['features']['reaction_roles'] = not current_enabled
+                self.setup_cog.save_configs()
+                
+                status = "enabled" if not current_enabled else "disabled"
+                embed = discord.Embed(
+                    title=f"✅ Reaction Roles {status.title()}!",
+                    description=f"Reaction role functionality has been {status}.\n"
+                               f"{'Use `/reactionroles` to set up role reactions.' if not current_enabled else ''}",
+                    color=0x00ff88 if not current_enabled else 0xff6600
+                )
+                
+                await interaction.response.edit_message(embed=embed, view=None)
+        
+        embed = discord.Embed(
+            title="🎭 Edit Reaction Roles",
+            description=f"Reaction roles are currently: **{'Enabled' if current_enabled else 'Disabled'}**\n\n"
+                       f"Reaction roles allow users to get skateboard-themed roles by reacting to messages.\n"
+                       f"Roles include: Street Skater, Vert Skater, Freestyle, Cruiser, and Longboard.",
+            color=0x00ff88
+        )
+        
+        toggle_view = ReactionRolesToggleView(self.setup_cog, self.guild)
         await interaction.response.edit_message(embed=embed, view=toggle_view)
 
 async def setup(bot):
