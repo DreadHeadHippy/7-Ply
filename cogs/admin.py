@@ -14,6 +14,121 @@ import time
 # Import security utilities
 from utils.security import SecurityValidator, SecureError
 
+class DetailedHelpView(discord.ui.View):
+    """Interactive view for detailed command help"""
+    
+    def __init__(self, help_content: dict, is_mod: bool, is_admin: bool, is_owner: bool):
+        super().__init__(timeout=300)  # 5 minute timeout
+        self.help_content = help_content
+        
+        # Create dropdown options based on permissions
+        options = []
+        
+        # Moderator commands
+        if is_mod or is_admin or is_owner:
+            options.extend([
+                discord.SelectOption(
+                    label="Reaction Roles",
+                    value="reactionroles",
+                    emoji="🎭",
+                    description="Create self-assignable roles with emoji reactions"
+                ),
+                discord.SelectOption(
+                    label="Reaction Roles Management", 
+                    value="reactionroles_manage",
+                    emoji="🛠️",
+                    description="Edit or delete existing reaction role messages"
+                ),
+                discord.SelectOption(
+                    label="Personal Slowmode",
+                    value="slowmode", 
+                    emoji="⏱️",
+                    description="Set temporary slowmode for individual users"
+                ),
+                discord.SelectOption(
+                    label="Custom Embeds",
+                    value="embed",
+                    emoji="📝", 
+                    description="Create rich embed messages with formatting"
+                )
+            ])
+        
+        # Administrator commands
+        if is_admin or is_owner:
+            options.extend([
+                discord.SelectOption(
+                    label="Interactive Setup",
+                    value="setup",
+                    emoji="🔧",
+                    description="Configure all bot features for your server"
+                ),
+                discord.SelectOption(
+                    label="Welcome Messages",
+                    value="welcome_config",
+                    emoji="👋", 
+                    description="Customize welcome messages with templates"
+                )
+            ])
+        
+        # Only add dropdown if there are options
+        if options:
+            self.command_select = CommandHelpSelect(options, self.help_content)
+            self.add_item(self.command_select)
+
+class CommandHelpSelect(discord.ui.Select):
+    """Dropdown for selecting commands to get detailed help"""
+    
+    def __init__(self, options: list, help_content: dict):
+        super().__init__(
+            placeholder="Select a command for detailed help...",
+            options=options,
+            min_values=1,
+            max_values=1
+        )
+        self.help_content = help_content
+    
+    async def callback(self, interaction: discord.Interaction):
+        selected_command = self.values[0]
+        help_data = self.help_content.get(selected_command)
+        
+        if not help_data:
+            await interaction.response.send_message("❌ Help not found for this command!", ephemeral=True)
+            return
+        
+        embed = discord.Embed(
+            title=help_data["title"],
+            description=help_data["description"],
+            color=0x00ff88
+        )
+        
+        embed.add_field(
+            name="📋 Usage",
+            value=help_data["usage"],
+            inline=False
+        )
+        
+        embed.add_field(
+            name="💡 Examples",
+            value=help_data["examples"],
+            inline=False
+        )
+        
+        embed.add_field(
+            name="🔐 Permissions",
+            value=help_data["permissions"],
+            inline=False
+        )
+        
+        embed.add_field(
+            name="🔧 Troubleshooting",
+            value=help_data["troubleshooting"],
+            inline=False
+        )
+        
+        embed.set_footer(text="Need more help? Ask in the server or contact an admin!")
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
 class AdminCommands(commands.Cog):
     """Administrative commands for server management"""
     
@@ -245,6 +360,58 @@ class AdminCommands(commands.Cog):
         except Exception:
             await interaction.response.send_message(SecureError.generic_error(), ephemeral=True)
 
+    # Detailed help content for complex commands
+    DETAILED_HELP = {
+        "reactionroles": {
+            "title": "🎭 Reaction Roles - Detailed Help",
+            "description": "Create self-assignable roles using emoji reactions",
+            "usage": "`/reactionroles [#channel]`",
+            "examples": "**Default Setup:**\n• `/reactionroles` - Creates skateboard-themed roles in current channel\n• `/reactionroles #roles` - Creates in specific channel\n\n**Custom Setup:**\n• Choose 'Custom Setup' in the prompt\n• Add up to 3 custom roles with your own names\n• Pick any emoji for each role",
+            "permissions": "**Required:** Manage Roles permission\n**Bot Needs:** Manage Roles, Send Messages, Add Reactions",
+            "troubleshooting": "• **Roles not assigning?** Check bot has Manage Roles permission and is above the roles in hierarchy\n• **Missing reactions?** Bot needs Add Reactions permission\n• **Can't create roles?** Bot role must be higher than roles being created"
+        },
+        "reactionroles_manage": {
+            "title": "🛠️ Reaction Roles Management - Detailed Help", 
+            "description": "Edit or delete existing reaction role messages",
+            "usage": "`/reactionroles_manage`",
+            "examples": "**Management Options:**\n• **View Details** - See current setup and roles\n• **Edit Roles** - Add/remove roles from message\n• **Delete Setup** - Remove entire reaction role message\n• **Test Roles** - Check if roles are working properly",
+            "permissions": "**Required:** Manage Roles permission",
+            "troubleshooting": "• **No messages found?** Only shows messages created by this bot\n• **Can't edit?** Make sure bot still has required permissions\n• **Roles broken?** Use 'Test Roles' option to diagnose issues"
+        },
+        "slowmode": {
+            "title": "⏱️ Personal Slowmode - Detailed Help",
+            "description": "Set temporary slowmode for individual users (not channel-wide)",
+            "usage": "`/slowmode @user <duration>`",
+            "examples": "**Duration Formats:**\n• `/slowmode @John 30s` - 30 seconds\n• `/slowmode @Jane 2m` - 2 minutes  \n• `/slowmode @Bob 1h` - 1 hour\n• `/slowmode @Alice off` - Remove slowmode\n\n**Maximum:** 6 hours per user",
+            "permissions": "**Required:** Manage Messages permission",
+            "troubleshooting": "• **User can still post?** Slowmode applies to next message after current one\n• **Not working?** Check bot has Delete Messages permission\n• **How to remove?** Use `/slowmode @user off` or `/slowmode_remove @user`"
+        },
+        "setup": {
+            "title": "🔧 Interactive Setup - Detailed Help",
+            "description": "Configure all bot features for your server",
+            "usage": "`/setup`",
+            "examples": "**Setup Process:**\n1. **Choose Features** - Select what you want enabled\n2. **Channel Creation** - Bot creates needed channels\n3. **Permission Setup** - Automatic role and permission configuration\n4. **Testing** - Verify everything works\n\n**Available Features:**\n• Ranking System (always included)\n• Reaction Roles\n• Welcome Messages\n• Suggestions System\n• Temp Voice Channels",
+            "permissions": "**Required:** Administrator permission\n**Bot Needs:** Manage Channels, Manage Roles, Send Messages",
+            "troubleshooting": "• **Setup failed?** Check you have Administrator permission\n• **Channels not created?** Bot needs Manage Channels permission\n• **Features not working?** Run `/setup` again to reconfigure\n• **Reset everything?** Use `/setup_reset`"
+        },
+        "welcome_config": {
+            "title": "👋 Welcome Messages - Detailed Help",
+            "description": "Customize welcome messages with templates and variables",
+            "usage": "`/welcome_config` `/welcome_set_message` `/welcome_settings`",
+            "examples": "**Template Variables:**\n• `{user}` - @mentions the new member\n• `{server}` - Server name\n• `{member_count}` - Current member count\n\n**Example Messages:**\n• `Welcome {user} to {server}! You're member #{member_count}!`\n• `🛹 Hey {user}! Ready to skate in {server}?`",
+            "permissions": "**Required:** Administrator permission",
+            "troubleshooting": "• **Variables not working?** Make sure to use exact format: `{user}`, `{server}`, `{member_count}`\n• **Welcome not posting?** Check bot has Send Messages permission in welcome channel\n• **Wrong channel?** Use `/setup` to reconfigure welcome channel"
+        },
+        "embed": {
+            "title": "📝 Custom Embeds - Detailed Help",
+            "description": "Create rich embed messages with formatting",
+            "usage": "`/embed [#channel] [title] <description>`",
+            "examples": "**Basic Usage:**\n• `/embed \"Announcement\" \"Server maintenance tonight\"`\n• `/embed #general \"Rules\" \"Please follow our community guidelines\"`\n\n**Formatting Tips:**\n• **Bold:** `**text**`\n• **Italic:** `*text*`\n• **Code:** `` `code` ``\n• **Links:** `[text](url)`",
+            "permissions": "**Required:** Manage Messages permission",
+            "troubleshooting": "• **Embed not appearing?** Check bot has Send Messages and Embed Links permissions\n• **Formatting broken?** Ensure markdown syntax is correct\n• **Long description?** Discord limits embeds to 4096 characters"
+        }
+    }
+
     @app_commands.command(name='help', description='Show available commands based on your permissions')
     async def help_slash(self, interaction: discord.Interaction):
         """Show help with commands organized by permission level"""
@@ -342,7 +509,12 @@ class AdminCommands(commands.Cog):
         
         embed.set_footer(text="🛹 Skate hard, rank up! | Use commands to earn points and climb the 15-ply ranking system")
         
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        # Create detailed help dropdown view if user has mod+ permissions
+        if is_mod or is_admin or is_owner:
+            view = DetailedHelpView(self.DETAILED_HELP, is_mod, is_admin, is_owner)
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        else:
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @commands.command(name='commands')
     async def help_legacy(self, ctx):
@@ -539,7 +711,19 @@ class AdminCommands(commands.Cog):
         
         # Calculate statistics
         total_servers = len(self.bot.guilds)
-        total_users = sum(guild.member_count for guild in self.bot.guilds if guild.member_count)
+        # Count only human users (not bots)
+        total_users = 0
+        for guild in self.bot.guilds:
+            if guild.member_count:
+                # Estimate human users (guild.member_count includes bots, so we'll subtract estimated bots)
+                # For accuracy, count actual humans if guild is cached
+                if guild.chunked:
+                    human_members = sum(1 for member in guild.members if not member.bot)
+                    total_users += human_members
+                else:
+                    # Fallback: estimate 85% are humans (typical Discord server ratio)
+                    estimated_humans = int(guild.member_count * 0.85)
+                    total_users += estimated_humans
         
         # Slowmode stats across all servers
         total_slowmodes_all_servers = sum(len(slowmodes) for slowmodes in self.user_slowmodes.values())
@@ -558,11 +742,14 @@ class AdminCommands(commands.Cog):
         import sys
         memory_usage = f"{sys.getsizeof(self.user_slowmodes) + sys.getsizeof(self.user_last_message)} bytes"
         
-        # Bot uptime
-        from bot import bot_start_time
-        uptime_seconds = current_time - bot_start_time if bot_start_time else 0
-        uptime_hours = int(uptime_seconds // 3600)
-        uptime_minutes = int((uptime_seconds % 3600) // 60)
+        # Bot uptime - get from bot object
+        try:
+            uptime_seconds = current_time - getattr(self.bot, '_start_time', current_time)
+            uptime_hours = int(uptime_seconds // 3600)
+            uptime_minutes = int((uptime_seconds % 3600) // 60)
+        except:
+            uptime_hours = 0
+            uptime_minutes = 0
         
         embed = discord.Embed(
             title="🤖 Bot Status & Health Check",

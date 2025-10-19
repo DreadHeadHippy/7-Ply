@@ -273,15 +273,8 @@ class RankingSystem(commands.Cog):
             embed.set_thumbnail(url=target_user.display_avatar.url)
             embed.set_footer(text="Keep skating to level up! 🛹")
             
-            # Simple behavior: ephemeral outside #rank, normal inside #rank
-            rank_channel_id = self.get_rank_channel_id(interaction.guild.id) if interaction.guild else None
-            
-            if interaction.channel and rank_channel_id and interaction.channel.id == rank_channel_id:
-                # Used in #rank channel - respond normally
-                await interaction.response.send_message(embed=embed)
-            else:
-                # Used outside #rank channel or no rank channel configured - respond ephemeral
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+            # Make /rank public by default - people can celebrate each other's progress
+            await interaction.response.send_message(embed=embed)
                 
         except Exception as e:
             print(f"Error in rank command: {e}")
@@ -310,7 +303,7 @@ class RankingSystem(commands.Cog):
         for i, (user_id_str, data) in enumerate(sorted_users, 1):
             try:
                 user = self.bot.get_user(int(user_id_str))
-                if user:
+                if user and not user.bot:  # Exclude bots from leaderboard
                     rank_info = self.get_rank_info(data["rank"])
                     
                     # Medal emojis for top 3

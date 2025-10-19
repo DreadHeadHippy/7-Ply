@@ -190,6 +190,7 @@ async def on_ready():
     
     # Record start time for uptime tracking
     bot_start_time = time.time()
+    setattr(bot, '_start_time', bot_start_time)
     
     # Set activity status
     activity = discord.Activity(
