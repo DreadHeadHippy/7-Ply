@@ -11,14 +11,13 @@ A **premium Discord bot** for skateboarding communities! Features a comprehensiv
 - **Community Recognition**: `/1up` command lets users boost each other's progress
 
 ### 🛹 **Skateboard Commands**
-- `/trick` — Get random skateboard tricks with control images
+- `/trick` — Get random skateboard tricks for skate. with control images
 - `/skatefact` — Learn fascinating skateboarding history and facts
-- `/brand` — Explore skateboard brand history from legends to modern day
+- `/skatehistory` — Learn about skateboarding history
+- `/brand` — Explore skateboard brand history from legends to modern day  
 - `/skater` — Learn about legendary skaters and their contributions
 - `/crew` — Discover iconic skate crews that shaped the culture
-- **Themed Interactions**: All commands feature authentic skateboarding culture
-
-### 👥 **Community Features** (Optional)
+- **Themed Interactions**: All commands feature authentic skateboarding culture### 👥 **Community Features** (Optional)
 - **Interactive Setup**: Choose which features you want during `/setup`
 - **Reaction Roles**: Skateboard-themed self-serve roles (`/reactionroles`)
 - **Custom Welcome System**: Fully configurable welcome messages with templates (optional)
@@ -45,6 +44,7 @@ Click the invite link and authorize the bot with the safe, standard permissions 
 ```
 Choose which features you want:
 - 🏆 **Ranking System** - Always included (core feature)
+- ✅ **Reaction Roles** - Self-assignable roles with emoji reactions (optional)
 - 💡 **Suggestions System** - Community feedback with voting (optional)
 - 👋 **Welcome Messages** - Skateboard-themed member greetings (optional) 
 - 🔊 **Temp Voice Channels** - User-managed voice rooms (optional)
