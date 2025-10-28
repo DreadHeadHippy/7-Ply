@@ -526,9 +526,8 @@ class CommunityFeatures(commands.Cog):
                 self.messages_data = messages_data
 
             async def callback(self, interaction: discord.Interaction):
-                try:
-                    selected_index = int(self.values[0])
-                    selected_message = self.messages_data[selected_index]
+                selected_index = int(self.values[0])
+                selected_message = self.messages_data[selected_index]
                 
                 # Show management options for selected message
                 class MessageManageView(discord.ui.View):
@@ -626,8 +625,6 @@ class CommunityFeatures(commands.Cog):
 
                 manage_view = MessageManageView(selected_message)
                 await interaction.response.edit_message(embed=embed, view=manage_view)
-            except discord.NotFound:
-                await interaction.response.send_message("❌ This interaction has expired or is no longer valid.", ephemeral=True)
 
         # Show list of messages
         embed = discord.Embed(
