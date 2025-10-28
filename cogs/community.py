@@ -435,6 +435,9 @@ class CommunityFeatures(commands.Cog):
     async def reaction_roles_manage(self, interaction: discord.Interaction):
         """Manage existing reaction role messages in the server"""
         
+        # Defer the interaction to prevent timeout - this can take time to fetch messages
+        await interaction.response.defer(ephemeral=True)
+        
         # Check if reaction roles feature is enabled
         setup_cog = self.bot.get_cog('Setup')
         if setup_cog and interaction.guild:
@@ -446,7 +449,7 @@ class CommunityFeatures(commands.Cog):
                                "An administrator can enable them using `/setup` command.",
                     color=0xff6600
                 )
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.followup.send(embed=embed, ephemeral=True)
                 return
 
         if not self.reaction_roles_data:
@@ -456,7 +459,7 @@ class CommunityFeatures(commands.Cog):
                            "Use `/reactionroles` to create your first one!",
                 color=0x00ff88
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.followup.send(embed=embed, ephemeral=True)
             return
 
         # Find messages in this guild
@@ -490,7 +493,7 @@ class CommunityFeatures(commands.Cog):
                            "They may have been deleted or are in channels I can't access.",
                 color=0x00ff88
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await interaction.followup.send(embed=embed, ephemeral=True)
             return
 
         # Create management interface
@@ -523,8 +526,9 @@ class CommunityFeatures(commands.Cog):
                 self.messages_data = messages_data
 
             async def callback(self, interaction: discord.Interaction):
-                selected_index = int(self.values[0])
-                selected_message = self.messages_data[selected_index]
+                try:
+                    selected_index = int(self.values[0])
+                    selected_message = self.messages_data[selected_index]
                 
                 # Show management options for selected message
                 class MessageManageView(discord.ui.View):
@@ -622,6 +626,8 @@ class CommunityFeatures(commands.Cog):
 
                 manage_view = MessageManageView(selected_message)
                 await interaction.response.edit_message(embed=embed, view=manage_view)
+            except discord.NotFound:
+                await interaction.response.send_message("❌ This interaction has expired or is no longer valid.", ephemeral=True)
 
         # Show list of messages
         embed = discord.Embed(
@@ -647,7 +653,7 @@ class CommunityFeatures(commands.Cog):
             )
 
         manage_view = ReactionRoleManageView(guild_messages)
-        await interaction.response.send_message(embed=embed, view=manage_view, ephemeral=True)
+        await interaction.followup.send(embed=embed, view=manage_view, ephemeral=True)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
