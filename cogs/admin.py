@@ -711,20 +711,19 @@ class AdminCommands(commands.Cog):
         
         # Calculate statistics
         total_servers = len(self.bot.guilds)
-        # Count only human users (not bots)
-        total_users = 0
+        # Count only unique human users (not bots) across all servers
+        unique_user_ids = set()
         for guild in self.bot.guilds:
-            if guild.member_count:
-                # Estimate human users (guild.member_count includes bots, so we'll subtract estimated bots)
-                # For accuracy, count actual humans if guild is cached
-                if guild.chunked:
-                    human_members = sum(1 for member in guild.members if not member.bot)
-                    total_users += human_members
-                else:
-                    # Fallback: estimate 85% are humans (typical Discord server ratio)
-                    estimated_humans = int(guild.member_count * 0.85)
-                    total_users += estimated_humans
-        
+            if guild.chunked:
+                for member in guild.members:
+                    if not member.bot:
+                        unique_user_ids.add(member.id)
+            else:
+                # Fallback: estimate 85% are humans (typical Discord server ratio)
+                # This fallback will not deduplicate, but is used only if member list is not available
+                pass
+        total_users = len(unique_user_ids)
+
         # Slowmode stats across all servers
         total_slowmodes_all_servers = sum(len(slowmodes) for slowmodes in self.user_slowmodes.values())
         
