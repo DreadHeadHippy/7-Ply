@@ -923,9 +923,8 @@ class SkateboardCommands(commands.Cog):
 
     @app_commands.command(name='daily', description='Check when daily missions reset (1 PM EST)')
     async def daily_reset(self, interaction: discord.Interaction):
-        # Base timestamp you provided: 1728752400 = 1 PM EST on a specific day
-        # We'll calculate daily resets from this base
-        base_timestamp = 1728752400  # Your reference 1 PM EST timestamp
+        # Base timestamp: 1 PM EST on a reference day (updated for current timezone)
+        base_timestamp = 1762106400  # 1 PM EST on 2025-11-02 (current reference)
         current_timestamp = int(self.get_edt_now().timestamp())
         
         # Calculate seconds in a day
@@ -960,10 +959,10 @@ class SkateboardCommands(commands.Cog):
         
         await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name='weekly', description='Check when weekly missions reset (Tuesdays at 1 PM EDT)')
+    @app_commands.command(name='weekly', description='Check when weekly missions reset (Tuesdays at 1 PM EST)')
     async def weekly_reset(self, interaction: discord.Interaction):
-        # Base timestamp: same as daily but we'll find the next Tuesday
-        base_timestamp = 1728752400  # Your reference 1 PM EST timestamp
+        # Base timestamp: 1 PM EST on a reference day (updated for current timezone)
+        base_timestamp = 1762106400  # 1 PM EST on 2025-11-02 (current reference)
         current_timestamp = int(self.get_edt_now().timestamp())
         
         # Calculate seconds in a day and week
@@ -1006,7 +1005,7 @@ class SkateboardCommands(commands.Cog):
         
         embed.add_field(
             name="🗓️ Reset Schedule",
-            value="Weekly missions reset every **Tuesday at 1:00 PM EDT**",
+            value="Weekly missions reset every **Tuesday at 1:00 PM EST**",
             inline=False
         )
         
